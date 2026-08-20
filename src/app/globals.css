@@ -106,3 +106,18 @@ svg {
 [hidden] {
   display: none !important;
 }
+
+.story-action-button:not(:disabled):hover {
+  animation: story-action-pulse 900ms var(--ease-in-out) infinite;
+}
+
+.story-action-button:not(:disabled):hover > span {
+  animation: story-action-spin 1.2s linear infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .story-action-button:not(:disabled):hover,
+  .story-action-button:not(:disabled):hover > span {
+    animation: none;
+  }
+}

@@ -17,12 +17,12 @@
   --color-rule-strong: oklch(82% 0.018 150);
 
   /* Accent · reserved for creation, selection, links, and focus */
-  --color-accent: oklch(57.5% 0.157 274);
-  --color-accent-hover: oklch(63% 0.145 274);
-  --color-accent-active: oklch(51% 0.15 274);
+  --color-accent: oklch(57.5% 0.12 274);
+  --color-accent-hover: oklch(63% 0.11 274);
+  --color-accent-active: oklch(51% 0.115 274);
   --color-accent-soft: oklch(94.5% 0.025 274);
   --color-on-accent: oklch(100% 0 0);
-  --color-focus: oklch(57.5% 0.157 274);
+  --color-focus: oklch(57.5% 0.12 274);
 
   /* Viewer · a separate immersive surface, not a site-wide dark mode */
   --color-viewer: oklch(17.5% 0.004 250);
@@ -114,5 +114,26 @@
     --dur-base: 100ms;
     --dur-slow: 120ms;
     --dur-viewer: 150ms;
+  }
+}
+
+@keyframes story-action-pulse {
+  0%,
+  100% {
+    transform: scale(1);
+  }
+
+  50% {
+    transform: scale(1.06);
+  }
+}
+
+@keyframes story-action-spin {
+  from {
+    transform: rotate(0deg);
+  }
+
+  to {
+    transform: rotate(360deg);
   }
 }

@@ -42,7 +42,7 @@ export function AddStoryButton({ onImageReady, processFile = processImageFile }:
   }
 
   return (
-    <div className="flex flex-col items-start gap-2">
+    <div className="flex flex-col items-center gap-2">
       <input
         ref={inputRef}
         type="file"
@@ -56,9 +56,13 @@ export function AddStoryButton({ onImageReady, processFile = processImageFile }:
         type="button"
         onClick={openFilePicker}
         disabled={isProcessing}
-        className="inline-flex min-h-11 items-center justify-center rounded-button bg-brand px-4 py-2 text-sm font-medium text-on-brand transition-colors hover:bg-brand-hover active:bg-brand-active disabled:cursor-not-allowed disabled:bg-disabled-surface disabled:text-disabled-ink"
+        aria-label={isProcessing ? '正在处理 Story 图片' : '添加 Story'}
+        title={isProcessing ? '正在处理 Story 图片' : '添加 Story'}
+        className="story-action-button inline-flex size-11 items-center justify-center rounded-full border border-brand/30 bg-brand-soft text-xl leading-none font-medium text-brand transition-[background-color,border-color,color,transform] duration-200 ease-out hover:border-brand hover:bg-brand hover:text-on-brand active:bg-brand-active disabled:cursor-not-allowed disabled:border-border disabled:bg-disabled-surface disabled:text-disabled-ink"
       >
-        {isProcessing ? '处理中…' : '添加 Story'}
+        <span aria-hidden="true" className={isProcessing ? 'animate-spin' : undefined}>
+          +
+        </span>
       </button>
 
       {errorMessage ? (
