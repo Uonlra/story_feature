@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 720 1280" role="img" aria-labelledby="title description">
+    <title id="title">海边蓝调</title>
+    <desc id="description">深蓝海面与浅色天空交汇</desc>
+    <rect width="720" height="1280" fill="#dce8ec"/>
+    <rect y="420" width="720" height="860" fill="#527d91"/>
+    <path d="M0 560C125 510 220 620 345 560C480 495 590 590 720 525V720H0Z" fill="#83adba"/>
+    <path d="M0 690C150 630 260 750 410 675C545 610 630 710 720 650V900H0Z" fill="#315d74"/>
+    <circle cx="145" cy="220" r="80" fill="#fff7db" opacity=".9"/>
+</svg>

@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 720 1280" role="img" aria-labelledby="title description">
+  <title id="title">城市夜色</title>
+  <desc id="description">靛蓝夜空下亮起灯光的城市</desc>
+  <rect width="720" height="1280" fill="#17182b"/>
+  <circle cx="540" cy="190" r="92" fill="#f5e8c1"/>
+  <circle cx="510" cy="165" r="92" fill="#17182b"/>
+  <rect x="55" y="530" width="170" height="750" fill="#242743"/>
+  <rect x="250" y="380" width="210" height="900" fill="#303354"/>
+  <rect x="490" y="610" width="175" height="670" fill="#222540"/>
+  <g fill="#d6b36b">
+    <rect x="90" y="590" width="28" height="45"/>
+    <rect x="155" y="690" width="28" height="45"/>
+    <rect x="290" y="450" width="32" height="50"/>
+    <rect x="380" y="570" width="32" height="50"/>
+    <rect x="530" y="690" width="28" height="45"/>
+    <rect x="600" y="805" width="28" height="45"/>
+  </g>
+</svg>

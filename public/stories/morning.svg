@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 720 1280" role="img" aria-labelledby="title description">
+    <title id="title">清晨窗边</title>
+    <desc id="description">暖黄色晨光落在窗边植物上</desc>
+    <rect width="720" height="1280" fill="#ece9df"/>
+    <circle cx="570" cy="210" r="150" fill="#f1c77d"/>
+    <path d="M0 780C160 690 280 730 420 650C560 570 650 590 720 540V1280H0Z" fill="#6f8c75"/>
+    <path d="M0 900C170 820 320 870 470 770C590 690 670 720 720 690V1280H0Z" fill="#405c4a"/>
+    <rect x="76" y="90" width="14" height="780" rx="7" fill="#fff" opacity=".72"/>
+    <rect x="250" y="90" width="14" height="650" rx="7" fill="#fff" opacity=".46"/>
+</svg>
