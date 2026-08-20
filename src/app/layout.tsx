@@ -17,7 +17,7 @@ export const metadata: Metadata = {
     default: 'Story Feature',
     template: '%s · Story Feature',
   },
-  description: '在浏览器本地创建、保存和查看图片,24H 后图片自动消失。',
+  description: '在浏览器本地创建、保存和查看会在 24 小时后自动过期的图片 Story。',
   applicationName: 'Story Feature',
 };
 

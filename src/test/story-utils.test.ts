@@ -5,7 +5,7 @@ import { STORY_LIFETIME_MS, type Story } from '@/types/story';
 
 const baseStory: Story = {
   id: 'story-1',
-  imageDataUrl: 'data:image/webp;base64,example',
+  imageSrc: 'data:image/webp;base64,example',
   mimeType: 'image/webp',
   width: 1080,
   height: 1920,
@@ -17,7 +17,7 @@ describe('story utilities', () => {
   it('creates a story with a deterministic id and time', () => {
     const story = createStory(
       {
-        imageDataUrl: 'data:image/webp;base64,example',
+        imageSrc: 'data:image/webp;base64,example',
         mimeType: 'image/webp',
         width: 1080,
         height: 1920,

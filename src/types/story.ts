@@ -4,15 +4,20 @@ export const STORY_STORAGE_KEY = 'story-feature:stories:v1';
 
 export type StoryMimeType = 'image/jpeg' | 'image/png' | 'image/webp';
 
-export type Story = {
+type StoryBase = {
   id: string;
   imageSrc: string;
-  mimeType: StoryMimeType;
   width: number;
   height: number;
   createdAt: number;
   expiresAt: number;
 };
+
+export type Story = StoryBase & {
+  mimeType: StoryMimeType;
+};
+
+export type StoryPreview = StoryBase;
 
 export type StoryStorageV1 = {
   version: 1;
