@@ -1,0 +1,27 @@
+warning: in the working copy of 'package.json', LF will be replaced by CRLF the next time Git touches it
+[1mdiff --git a/package.json b/package.json[m
+[1mindex 1902f41..cdddbbd 100644[m
+[1m--- a/package.json[m
+[1m+++ b/package.json[m
+[36m@@ -6,7 +6,10 @@[m
+     "dev": "next dev",[m
+     "build": "next build",[m
+     "start": "next start",[m
+[31m-    "lint": "eslint"[m
+[32m+[m[32m    "lint": "eslint",[m
+[32m+[m[32m    "typecheck": "tsc --noEmit",[m
+[32m+[m[32m    "format": "prettier --write .",[m
+[32m+[m[32m    "format:check": "prettier --check ."[m
+   },[m
+   "dependencies": {[m
+     "next": "16.3.1",[m
+[36m@@ -21,6 +24,9 @@[m
+     "babel-plugin-react-compiler": "1.0.0",[m
+     "eslint": "^9",[m
+     "eslint-config-next": "16.3.1",[m
+[32m+[m[32m    "eslint-config-prettier": "10.1.8",[m
+[32m+[m[32m    "oxlint": "1.79.0",[m
+[32m+[m[32m    "prettier": "3.9.6",[m
+     "tailwindcss": "^4",[m
+     "typescript": "^5"[m
+   },[m
