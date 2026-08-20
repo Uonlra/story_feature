@@ -13,7 +13,9 @@ export function StoryAvatar({ story }: StoryAvatarProps) {
         <Image src={story.imageSrc} alt="" fill sizes="64px" className="object-cover" />
       </div>
 
-      <figcaption className="max-w-full truncate text-xs text-text-muted">{story.id}</figcaption>
+      <figcaption title={story.label} className="max-w-full truncate text-xs text-text-muted">
+        {story.label}
+      </figcaption>
     </figure>
   );
 }

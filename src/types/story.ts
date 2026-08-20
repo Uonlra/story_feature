@@ -17,7 +17,9 @@ export type Story = StoryBase & {
   mimeType: StoryMimeType;
 };
 
-export type StoryPreview = StoryBase;
+export type StoryPreview = StoryBase & {
+  label: string;
+};
 
 export type StoryStorageV1 = {
   version: 1;
