@@ -52,23 +52,23 @@
 
 ### 3.1 核心技术栈
 
-| 类别 | 选择 | 用途 |
-| --- | --- | --- |
-| 框架 | Next.js App Router | 多页面路由、Server Component / Client Component 边界、工程展示更完整 |
-| UI | React 19 | 组件拆分、状态管理和交互编排 |
-| 语言 | TypeScript strict | 为 Story 数据、存储结构和工具函数建立强约束 |
-| 样式 | Tailwind CSS + CSS Modules | Tailwind 负责常规布局与视觉，CSS Modules 只用于少量动画、遮罩和复杂过渡 |
-| 组件基础 | shadcn/ui | 提供 Button、Dialog、AlertDialog、Tooltip、Sonner 等基础交互组件 |
-| 状态管理 | Zustand | 管理 Story 集合、增删改清、过期过滤和存储同步 |
-| 校验 | Zod | 校验 `localStorage` 数据版本与结构 |
-| 图片处理 | 原生 File API + `createImageBitmap` + Canvas | 读取、缩放、压缩和导出 Data URL |
-| 本地存储 | `localStorage` | 满足题目要求，作为唯一数据源 |
-| 图标 | lucide-react | 统一使用语义清晰的图标 |
-| 单测 | Vitest + Testing Library + user-event | 覆盖工具函数、状态逻辑和交互行为 |
-| E2E | Playwright | 验证真实浏览器中的上传、恢复、过期和查看流程 |
-| 可访问性 | axe-core + Playwright | 运行首页与查看器的 a11y 扫描 |
-| CI | GitHub Actions | 在 push / PR 上跑 lint、typecheck、test、build 和 E2E |
-| 包管理 | pnpm | 与现有环境保持一致 |
+| 类别     | 选择                                         | 用途                                                                    |
+| -------- | -------------------------------------------- | ----------------------------------------------------------------------- |
+| 框架     | Next.js App Router                           | 多页面路由、Server Component / Client Component 边界、工程展示更完整    |
+| UI       | React 19                                     | 组件拆分、状态管理和交互编排                                            |
+| 语言     | TypeScript strict                            | 为 Story 数据、存储结构和工具函数建立强约束                             |
+| 样式     | Tailwind CSS + CSS Modules                   | Tailwind 负责常规布局与视觉，CSS Modules 只用于少量动画、遮罩和复杂过渡 |
+| 组件基础 | shadcn/ui                                    | 提供 Button、Dialog、AlertDialog、Tooltip、Sonner 等基础交互组件        |
+| 状态管理 | Zustand                                      | 管理 Story 集合、增删改清、过期过滤和存储同步                           |
+| 校验     | Zod                                          | 校验 `localStorage` 数据版本与结构                                      |
+| 图片处理 | 原生 File API + `createImageBitmap` + Canvas | 读取、缩放、压缩和导出 Data URL                                         |
+| 本地存储 | `localStorage`                               | 满足题目要求，作为唯一数据源                                            |
+| 图标     | lucide-react                                 | 统一使用语义清晰的图标                                                  |
+| 单测     | Vitest + Testing Library + user-event        | 覆盖工具函数、状态逻辑和交互行为                                        |
+| E2E      | Playwright                                   | 验证真实浏览器中的上传、恢复、过期和查看流程                            |
+| 可访问性 | axe-core + Playwright                        | 运行首页与查看器的 a11y 扫描                                            |
+| CI       | GitHub Actions                               | 在 push / PR 上跑 lint、typecheck、test、build 和 E2E                   |
+| 包管理   | pnpm                                         | 与现有环境保持一致                                                      |
 
 ### 3.2 技术边界
 
@@ -122,19 +122,19 @@
 
 ```ts
 export type Story = {
-  id: string
-  imageDataUrl: string
-  mimeType: 'image/jpeg' | 'image/png' | 'image/webp'
-  width: number
-  height: number
-  createdAt: number
-  expiresAt: number
-}
+  id: string;
+  imageDataUrl: string;
+  mimeType: "image/jpeg" | "image/png" | "image/webp";
+  width: number;
+  height: number;
+  createdAt: number;
+  expiresAt: number;
+};
 
 export type StoryStorageV1 = {
-  version: 1
-  stories: Story[]
-}
+  version: 1;
+  stories: Story[];
+};
 ```
 
 规则：
@@ -149,7 +149,7 @@ export type StoryStorageV1 = {
 建议的存储键：
 
 ```ts
-export const STORY_STORAGE_KEY = 'story-feature:stories:v1'
+export const STORY_STORAGE_KEY = "story-feature:stories:v1";
 ```
 
 ## 6. 代码规划
@@ -205,15 +205,15 @@ tests/
 
 ## 7. 组件规划
 
-| 组件 | 责任 |
-| --- | --- |
-| `story-studio` | 组织首页整体布局 |
-| `story-rail` | 渲染 Story 列表和新增入口 |
-| `story-avatar` | 渲染单个 Story 封面 |
-| `add-story-button` | 触发文件选择和处理中状态 |
-| `story-viewer` | 全屏查看、切换和关闭 Story |
-| `story-progress` | 展示当前序号与自动播放进度 |
-| `delete-story-dialog` | 删除前确认 |
+| 组件                   | 责任                          |
+| ---------------------- | ----------------------------- |
+| `story-studio`         | 组织首页整体布局              |
+| `story-rail`           | 渲染 Story 列表和新增入口     |
+| `story-avatar`         | 渲染单个 Story 封面           |
+| `add-story-button`     | 触发文件选择和处理中状态      |
+| `story-viewer`         | 全屏查看、切换和关闭 Story    |
+| `story-progress`       | 展示当前序号与自动播放进度    |
+| `delete-story-dialog`  | 删除前确认                    |
 | `clear-stories-button` | `/about` 中清空全部本地 Story |
 
 说明：
@@ -283,17 +283,17 @@ tests/
 
 ## 9. 错误与边界状态
 
-| 场景 | 预期行为 |
-| --- | --- |
-| 用户取消文件选择 | 不报错，不改变现有数据 |
-| 非图片文件 | 提示只支持 JPEG / PNG / WebP |
-| 图片损坏 | 提示图片无法读取 |
-| 文件过大 | 直接拒绝并提示 |
-| localStorage 满了 | 提示存储空间不足，保留旧数据 |
-| localStorage JSON 损坏 | 回退为空列表，不让页面崩溃 |
-| Story 过期 | 自动清理并更新界面 |
-| 列表为空 | 显示空状态和新增入口 |
-| 快速重复点击 | 处理中禁用入口，避免并发写入 |
+| 场景                   | 预期行为                     |
+| ---------------------- | ---------------------------- |
+| 用户取消文件选择       | 不报错，不改变现有数据       |
+| 非图片文件             | 提示只支持 JPEG / PNG / WebP |
+| 图片损坏               | 提示图片无法读取             |
+| 文件过大               | 直接拒绝并提示               |
+| localStorage 满了      | 提示存储空间不足，保留旧数据 |
+| localStorage JSON 损坏 | 回退为空列表，不让页面崩溃   |
+| Story 过期             | 自动清理并更新界面           |
+| 列表为空               | 显示空状态和新增入口         |
+| 快速重复点击           | 处理中禁用入口，避免并发写入 |
 
 ## 10. 测试策略
 

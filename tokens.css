@@ -1,0 +1,118 @@
+/* Hallmark · pre-emit critique: P5 H5 E5 S5 R5 V4
+ * genre: modern-minimal · macrostructure: Workbench
+ * theme: custom Quiet Frame · paper: light warm-neutral
+ * display: Geist geometric sans · accent: cool indigo
+ */
+
+:root {
+  /* Color · quiet chrome lets user imagery carry the page */
+  --color-canvas: oklch(97.7% 0.006 115);
+  --color-surface: oklch(100% 0 0);
+  --color-surface-muted: oklch(95.8% 0.008 115);
+  --color-surface-hover: oklch(93.8% 0.01 115);
+  --color-ink: oklch(21.6% 0.008 166);
+  --color-ink-muted: oklch(55.9% 0.015 164);
+  --color-ink-subtle: oklch(67% 0.012 164);
+  --color-rule: oklch(90.8% 0.012 144);
+  --color-rule-strong: oklch(82% 0.018 150);
+
+  /* Accent · reserved for creation, selection, links, and focus */
+  --color-accent: oklch(57.5% 0.157 274);
+  --color-accent-hover: oklch(63% 0.145 274);
+  --color-accent-active: oklch(51% 0.15 274);
+  --color-accent-soft: oklch(94.5% 0.025 274);
+  --color-on-accent: oklch(100% 0 0);
+  --color-focus: oklch(57.5% 0.157 274);
+
+  /* Viewer · a separate immersive surface, not a site-wide dark mode */
+  --color-viewer: oklch(17.5% 0.004 250);
+  --color-viewer-raised: oklch(23% 0.006 250);
+  --color-viewer-ink: oklch(98% 0 0);
+  --color-viewer-muted: oklch(78% 0.008 250);
+  --color-overlay: oklch(10% 0.006 250 / 72%);
+
+  /* Semantic */
+  --color-success: oklch(62.9% 0.127 155);
+  --color-success-soft: oklch(95% 0.035 155);
+  --color-warning: oklch(69.8% 0.148 60);
+  --color-warning-soft: oklch(96% 0.035 75);
+  --color-danger: oklch(61.6% 0.176 25);
+  --color-danger-hover: oklch(56% 0.18 25);
+  --color-danger-soft: oklch(95.5% 0.035 25);
+  --color-disabled-surface: oklch(93% 0.006 115);
+  --color-disabled-ink: oklch(66% 0.008 164);
+
+  /* Typography · preserve the project's next/font setup */
+  --font-display: var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif;
+  --font-body: var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif;
+  --font-label: var(--font-geist-mono), ui-monospace, monospace;
+
+  --text-xs: 0.75rem;
+  --text-sm: 0.875rem;
+  --text-base: 1rem;
+  --text-lg: 1.125rem;
+  --text-xl: 1.25rem;
+  --text-2xl: 1.5rem;
+  --text-display: clamp(2rem, 5vw, 2.5rem);
+
+  --leading-tight: 1.15;
+  --leading-heading: 1.25;
+  --leading-body: 1.5;
+  --leading-relaxed: 1.65;
+  --tracking-display: -0.035em;
+  --tracking-heading: -0.02em;
+  --tracking-label: 0.04em;
+
+  /* Space · 4 px base scale */
+  --space-1: 0.25rem;
+  --space-2: 0.5rem;
+  --space-3: 0.75rem;
+  --space-4: 1rem;
+  --space-5: 1.25rem;
+  --space-6: 1.5rem;
+  --space-8: 2rem;
+  --space-10: 2.5rem;
+  --space-12: 3rem;
+  --space-16: 4rem;
+  --space-section: clamp(3rem, 8vw, 5rem);
+  --page-gutter: clamp(1rem, 4vw, 2rem);
+  --page-max: 72rem;
+
+  /* Shape · a small, deliberate vocabulary */
+  --radius-control: 0.625rem;
+  --radius-card: 0.75rem;
+  --radius-dialog: 1rem;
+  --radius-pill: 9999px;
+  --radius-round: 50%;
+  --rule-thin: 1px;
+  --control-min-size: 2.75rem;
+
+  /* Depth · imagery stays flat; overlays earn elevation */
+  --shadow-overlay: 0 1.5rem 4rem oklch(10% 0.006 250 / 28%);
+  --shadow-focus: 0 0 0 3px oklch(57.5% 0.157 274 / 28%);
+
+  /* Motion · restrained, informative, and transform-safe */
+  --dur-instant: 0ms;
+  --dur-fast: 120ms;
+  --dur-base: 180ms;
+  --dur-slow: 240ms;
+  --dur-viewer: 320ms;
+  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-in: cubic-bezier(0.7, 0, 0.84, 0);
+  --ease-in-out: cubic-bezier(0.65, 0, 0.35, 1);
+
+  /* Layering */
+  --z-header: 20;
+  --z-overlay: 40;
+  --z-dialog: 50;
+  --z-tooltip: 60;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --dur-fast: 80ms;
+    --dur-base: 100ms;
+    --dur-slow: 120ms;
+    --dur-viewer: 150ms;
+  }
+}
