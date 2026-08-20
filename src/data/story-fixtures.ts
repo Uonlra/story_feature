@@ -5,6 +5,7 @@ const FIXTURE_BASE_TIME = Date.UTC(2030, 0, 1, 8);
 export const storyFixtures = [
   {
     id: 'fixture-morning',
+    label: '清晨',
     imageSrc: '/stories/morning.svg',
     width: 720,
     height: 1280,
@@ -13,6 +14,7 @@ export const storyFixtures = [
   },
   {
     id: 'fixture-coast',
+    label: '海边',
     imageSrc: '/stories/coast.svg',
     width: 720,
     height: 1280,
@@ -21,6 +23,7 @@ export const storyFixtures = [
   },
   {
     id: 'fixture-night',
+    label: '夜色',
     imageSrc: '/stories/night.svg',
     width: 720,
     height: 1280,
