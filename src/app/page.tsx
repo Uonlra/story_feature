@@ -1,7 +1,33 @@
+'use client';
+
+import { useState } from 'react';
+
+import { AddStoryButton } from '@/components/story/add-story-button';
 import { StoryRail } from '@/components/story/story-rail';
 import { storyFixtures } from '@/data/story-fixtures';
+import type { EncodedImage } from '@/lib/image-processing';
+import { STORY_LIFETIME_MS, type StoryPreview } from '@/types/story';
 
 export default function Home() {
+  const [stories, setStories] = useState<StoryPreview[]>(storyFixtures);
+
+  function handleImageReady(image: EncodedImage) {
+    const createdAt = Date.now();
+
+    setStories((currentStories) => [
+      ...currentStories,
+      {
+        id: crypto.randomUUID(),
+        label: '刚刚添加',
+        imageSrc: image.dataUrl,
+        width: image.width,
+        height: image.height,
+        createdAt,
+        expiresAt: createdAt + STORY_LIFETIME_MS,
+      },
+    ]);
+  }
+
   return (
     <main className="min-h-screen bg-page text-text">
       <div className="mx-auto flex min-h-screen w-full max-w-6xl flex-col px-4 py-6 sm:px-6 sm:py-8 lg:px-8">
@@ -25,8 +51,13 @@ export default function Home() {
               图片会在浏览器中完成处理与保存。Story 不会上传到服务器，并会在创建后的二十四小时自动过期。
             </p>
 
-            <div className="mt-10">
-              <StoryRail stories={storyFixtures} />
+            <div className="mt-10 space-y-6">
+              <div className="flex flex-wrap items-center justify-between gap-4">
+                <p className="text-sm text-text-muted">在此设备上添加一张图片，立即加入 Story 列表。</p>
+                <AddStoryButton onImageReady={handleImageReady} />
+              </div>
+
+              <StoryRail stories={stories} />
             </div>
           </div>
         </section>
