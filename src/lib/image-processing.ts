@@ -16,13 +16,18 @@ export type DecodedImage = ImageDimensions & {
   dispose: () => void;
 };
 
+export type EncodedImage = ImageDimensions & {
+  dataUrl: string;
+  mimeType: StoryMimeType;
+};
+
 export const SUPPORTED_IMAGE_MIME_TYPES = [
   'image/jpeg',
   'image/png',
   'image/webp',
 ] as const satisfies readonly StoryMimeType[];
 
-export type ImageValidationErrorCode = 'unsupported-type' | 'file-too-large' | 'decode-failed';
+export type ImageValidationErrorCode = 'unsupported-type' | 'file-too-large' | 'decode-failed' | 'canvas-failed';
 
 export class ImageValidationError extends Error {
   constructor(
@@ -117,5 +122,54 @@ async function decodeImageWithElement(file: File): Promise<DecodedImage> {
     throw new ImageValidationError('decode-failed', '图片无法读取或文件已经损坏。');
   } finally {
     URL.revokeObjectURL(objectUrl);
+  }
+}
+
+export function exportImageToDataUrl(
+  decoded: DecodedImage,
+  target: ImageDimensions,
+  mimeType: StoryMimeType = 'image/webp',
+  quality = 0.82,
+): EncodedImage {
+  if (target.width <= 0 || target.height <= 0) {
+    throw new RangeError('导出尺寸必须大于 0。');
+  }
+
+  const canvas = document.createElement('canvas');
+  canvas.width = target.width;
+  canvas.height = target.height;
+
+  const context = canvas.getContext('2d');
+
+  if (!context) {
+    throw new ImageValidationError('canvas-failed', '浏览器无法创建图片处理画布。');
+  }
+
+  context.drawImage(decoded.source, 0, 0, target.width, target.height);
+
+  try {
+    const requestedDataUrl = canvas.toDataURL(mimeType, quality);
+    const actualMimeType = requestedDataUrl.startsWith(`data:${mimeType};`) ? mimeType : 'image/jpeg';
+    const dataUrl = actualMimeType === mimeType ? requestedDataUrl : canvas.toDataURL('image/jpeg', quality);
+
+    return {
+      dataUrl,
+      mimeType: actualMimeType,
+      width: target.width,
+      height: target.height,
+    };
+  } catch {
+    throw new ImageValidationError('canvas-failed', '图片导出失败，请重试。');
+  }
+}
+
+export async function processImageFile(file: File): Promise<EncodedImage> {
+  const decoded = await decodeImageFile(file);
+
+  try {
+    const target = calculateTargetDimensions(decoded);
+    return exportImageToDataUrl(decoded, target);
+  } finally {
+    decoded.dispose();
   }
 }

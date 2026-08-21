@@ -6,7 +6,6 @@ export type StoryMimeType = 'image/jpeg' | 'image/png' | 'image/webp';
 
 type StoryBase = {
   id: string;
-  imageSrc: string;
   width: number;
   height: number;
   createdAt: number;
@@ -14,10 +13,12 @@ type StoryBase = {
 };
 
 export type Story = StoryBase & {
+  imageDataUrl: string;
   mimeType: StoryMimeType;
 };
 
 export type StoryPreview = StoryBase & {
+  imageSrc: string;
   label: string;
 };
 

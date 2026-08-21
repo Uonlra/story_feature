@@ -7,6 +7,7 @@ import {
   MAX_IMAGE_WIDTH,
   calculateTargetDimensions,
   decodeImageFile,
+  exportImageToDataUrl,
   isSupportedImageMimeType,
   validateImageFile,
 } from '@/lib/image-processing';
@@ -163,5 +164,93 @@ describe('image decoding', () => {
     decoded.dispose();
 
     vi.stubGlobal('Image', OriginalImage);
+  });
+});
+
+describe('canvas image export', () => {
+  it('draws the decoded image at the target size and returns a data URL', () => {
+    const drawImage = vi.fn();
+    const toDataURL = vi.fn().mockReturnValue('data:image/webp;base64,encoded');
+    const canvas = {
+      width: 0,
+      height: 0,
+      getContext: vi.fn().mockReturnValue({ drawImage }),
+      toDataURL,
+    } as unknown as HTMLCanvasElement;
+    const createElement = vi.spyOn(document, 'createElement').mockReturnValue(canvas);
+    const source = {} as CanvasImageSource;
+
+    const result = exportImageToDataUrl(
+      { source, width: 1600, height: 1200, dispose: vi.fn() },
+      { width: 800, height: 600 },
+    );
+
+    expect(createElement).toHaveBeenCalledWith('canvas');
+    expect(canvas.width).toBe(800);
+    expect(canvas.height).toBe(600);
+    expect(drawImage).toHaveBeenCalledWith(source, 0, 0, 800, 600);
+    expect(toDataURL).toHaveBeenCalledWith('image/webp', 0.82);
+    expect(result).toEqual({
+      dataUrl: 'data:image/webp;base64,encoded',
+      mimeType: 'image/webp',
+      width: 800,
+      height: 600,
+    });
+  });
+
+  it('falls back to JPEG when WebP export is unsupported', () => {
+    const toDataURL = vi
+      .fn()
+      .mockReturnValueOnce('data:image/png;base64,png-fallback')
+      .mockReturnValueOnce('data:image/jpeg;base64,jpeg-fallback');
+    const canvas = {
+      width: 0,
+      height: 0,
+      getContext: vi.fn().mockReturnValue({ drawImage: vi.fn() }),
+      toDataURL,
+    } as unknown as HTMLCanvasElement;
+    vi.spyOn(document, 'createElement').mockReturnValue(canvas);
+
+    const result = exportImageToDataUrl(
+      { source: {} as CanvasImageSource, width: 100, height: 100, dispose: vi.fn() },
+      { width: 100, height: 100 },
+    );
+
+    expect(toDataURL).toHaveBeenNthCalledWith(2, 'image/jpeg', 0.82);
+    expect(result.mimeType).toBe('image/jpeg');
+    expect(result.dataUrl).toBe('data:image/jpeg;base64,jpeg-fallback');
+  });
+
+  it('rejects invalid export dimensions', () => {
+    expect(() =>
+      exportImageToDataUrl(
+        { source: {} as CanvasImageSource, width: 100, height: 100, dispose: vi.fn() },
+        { width: 0, height: 100 },
+      ),
+    ).toThrow(RangeError);
+  });
+});
+
+describe('complete image processing', () => {
+  it('disposes the decoded source after exporting', async () => {
+    const dispose = vi.fn();
+    const createImageBitmap = vi.fn().mockResolvedValue({ width: 1600, height: 1200, close: dispose });
+    vi.stubGlobal('createImageBitmap', createImageBitmap);
+
+    const drawImage = vi.fn();
+    const canvas = {
+      width: 0,
+      height: 0,
+      getContext: vi.fn().mockReturnValue({ drawImage }),
+      toDataURL: vi.fn().mockReturnValue('data:image/webp;base64,encoded'),
+    } as unknown as HTMLCanvasElement;
+    vi.spyOn(document, 'createElement').mockReturnValue(canvas);
+
+    const { processImageFile } = await import('@/lib/image-processing');
+    const result = await processImageFile(createImageFile('image/png', 1_024));
+
+    expect(result.dataUrl).toContain('data:image/webp');
+    expect(drawImage).toHaveBeenCalledWith(expect.anything(), 0, 0, 1080, 810);
+    expect(dispose).toHaveBeenCalledOnce();
   });
 });
