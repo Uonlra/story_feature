@@ -55,8 +55,8 @@ describe('AddStoryButton', () => {
     const button = screen.getByRole('button', { name: '添加 Story' });
     await user.upload(input, createImageFile());
 
-    expect(button).toBeDisabled();
-    expect(button).toHaveTextContent('处理中…');
+    const processingButton = screen.getByRole('button', { name: '正在处理 Story 图片' });
+    expect(processingButton).toBeDisabled();
 
     resolveProcessing(encodedImage);
     await waitFor(() => expect(button).toBeEnabled());

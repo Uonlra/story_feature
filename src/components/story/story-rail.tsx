@@ -15,8 +15,7 @@ export function StoryRail({ stories, action }: StoryRailProps) {
           <h2 id="story-rail-title" className="text-lg font-semibold max-w-xl">
             Stories
           </h2>
-
-          <p className="mt-1 text-sm text-text-muted ">24 小时后自动过期</p>
+          
         </div>
 
         <div className="flex flex-col items-center gap-4 text-center font">

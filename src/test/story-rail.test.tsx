@@ -9,10 +9,10 @@ describe('StoryRail', () => {
     render(<StoryRail stories={storyFixtures} />);
 
     const rail = screen.getByRole('region', {
-      name: '我的 Story',
+      name: 'Stories',
     });
 
-    expect(within(rail).getByText('3 条')).toBeInTheDocument();
+    expect(within(rail).getByText('3 条记录')).toBeInTheDocument();
     expect(within(rail).getAllByRole('listitem')).toHaveLength(3);
 
     expect(within(rail).getByText('清晨')).toBeInTheDocument();
@@ -27,7 +27,7 @@ describe('StoryRail', () => {
 
     expect(status).toHaveTextContent('还没有 Story');
     expect(status).toHaveTextContent('添加一张图片，记录现在这一刻。');
-    expect(screen.getByText('0 条')).toBeInTheDocument();
+    expect(screen.getByText('0 条记录')).toBeInTheDocument();
     expect(screen.queryByRole('list')).not.toBeInTheDocument();
   });
 });

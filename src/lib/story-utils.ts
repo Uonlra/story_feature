@@ -1,7 +1,7 @@
 import { STORY_LIFETIME_MS, type Story, type StoryMimeType } from '@/types/story';
 
 export type CreateStoryInput = {
-  imageSrc: string;
+  imageDataUrl: string;
   mimeType: StoryMimeType;
   width: number;
   height: number;
@@ -17,7 +17,7 @@ export function createStory(input: CreateStoryInput, options: CreateStoryOptions
 
   return {
     id: options.id ?? crypto.randomUUID(),
-    imageSrc: input.imageSrc,
+    imageDataUrl: input.imageDataUrl,
     mimeType: input.mimeType,
     width: input.width,
     height: input.height,
