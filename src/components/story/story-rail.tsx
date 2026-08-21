@@ -15,7 +15,6 @@ export function StoryRail({ stories, action }: StoryRailProps) {
           <h2 id="story-rail-title" className="text-lg font-semibold max-w-xl">
             Stories
           </h2>
-          
         </div>
 
         <div className="flex flex-col items-center gap-4 text-center font">
