@@ -38,6 +38,22 @@ describe('story repository', () => {
     expect(repository.loadStories()).toEqual([]);
   });
 
+  it('converts storage read failures into a repository error', () => {
+    const storage = new MemoryStorage();
+
+    vi.spyOn(storage, 'getItem').mockImplementation(() => {
+      throw new Error('read failed');
+    });
+
+    const repository = createStoryRepository({ storage });
+
+    expect(() => repository.loadStories()).toThrowError(
+      expect.objectContaining<Pick<StoryRepositoryError, 'code'>>({
+        code: 'read-failed',
+      }),
+    );
+  });
+
   it('loads valid stories in creation order and persists expired cleanup', () => {
     const storage = new MemoryStorage();
     const now = STORY_LIFETIME_MS + 10_000;
@@ -91,6 +107,18 @@ describe('story repository', () => {
     );
   });
 
+  it('converts generic storage write failures into a repository error', () => {
+    const storage = new MemoryStorage();
+    vi.spyOn(storage, 'setItem').mockImplementation(() => {
+      throw new Error('write failed');
+    });
+    const repository = createStoryRepository({ storage });
+
+    expect(() => repository.saveStories([createStoredStory('story-1', 1_000)])).toThrowError(
+      expect.objectContaining<Pick<StoryRepositoryError, 'code'>>({ code: 'write-failed' }),
+    );
+  });
+
   it('clears the versioned storage key', () => {
     const storage = new MemoryStorage();
     storage.setItem(STORY_STORAGE_KEY, 'payload');
@@ -99,5 +127,30 @@ describe('story repository', () => {
     repository.clearStories();
 
     expect(storage.getItem(STORY_STORAGE_KEY)).toBeNull();
+  });
+
+  it('removes a story at the exact expiry boundary and rewrites storage', () => {
+    const storage = new MemoryStorage();
+    const now = STORY_LIFETIME_MS + 10_000;
+
+    const expiring = createStoredStory('expiring', 10_000);
+    const valid = createStoredStory('valid', 10_001);
+
+    storage.setItem(
+      STORY_STORAGE_KEY,
+      JSON.stringify({
+        version: 1,
+        stories: [expiring, valid],
+      }),
+    );
+
+    const repository = createStoryRepository({ storage });
+    const stories = repository.loadStories(now);
+
+    expect(stories.map((story) => story.id)).toEqual(['valid']);
+
+    const persistedPayload = JSON.parse(storage.getItem(STORY_STORAGE_KEY) ?? '');
+
+    expect(persistedPayload.stories).toEqual([valid]);
   });
 });

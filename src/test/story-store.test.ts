@@ -47,6 +47,24 @@ describe('story store', () => {
     });
   });
 
+  it('enters an error state when hydration fails', () => {
+    const repository = createRepository();
+
+    vi.mocked(repository.loadStories).mockImplementation(() => {
+      throw new Error('无法读取浏览器中的 Story。');
+    });
+
+    const store = createStoryStore(repository);
+
+    store.getState().hydrate();
+
+    expect(store.getState()).toMatchObject({
+      stories: [],
+      status: 'error',
+      errorMessage: '无法读取浏览器中的 Story。',
+    });
+  });
+
   it('creates and persists a processed image', () => {
     const repository = createRepository();
     const store = createStoryStore(repository);
@@ -61,6 +79,20 @@ describe('story store', () => {
     });
     expect(repository.saveStories).toHaveBeenCalledWith([story]);
     expect(store.getState().stories).toEqual([story]);
+  });
+
+  it('removes expired in-memory stories before adding a new story', () => {
+    const expired = createStoredStory('expired', Date.now() - STORY_LIFETIME_MS - 1);
+    const repository = createRepository([expired]);
+    const store = createStoryStore(repository);
+
+    store.getState().hydrate();
+
+    const newStory = store.getState().addStory(encodedImage);
+
+    expect(newStory.id).not.toBe('expired');
+    expect(store.getState().stories).toEqual([newStory]);
+    expect(repository.saveStories).toHaveBeenCalledWith([newStory]);
   });
 
   it('preserves the current collection when persistence fails', () => {
