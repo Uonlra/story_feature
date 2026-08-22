@@ -9,13 +9,13 @@ type StoryAvatarProps = {
 
 export function StoryAvatar({ story, onSelect }: StoryAvatarProps) {
   const avatar = (
-    <div className="relative aspect-square w-16 overflow-hidden rounded-full border-2 border-brand bg-panel-muted transition-transform duration-180 ease-out group-hover:scale-105">
-      <Image src={story.imageSrc} alt="" fill sizes="64px" className="object-cover" />
+    <div className="relative size-20 overflow-hidden rounded-full border-2 border-brand bg-panel-muted transition-transform duration-180 ease-out group-hover:scale-105 sm:size-22">
+      <Image src={story.imageSrc} alt="" fill sizes="(max-width: 640px) 80px, 88px" className="object-cover" />
     </div>
   );
 
   return (
-    <figure className="flex w-20 shrink-0 flex-col items-center gap-2">
+    <figure className="flex w-20 shrink-0 flex-col items-center gap-2 sm:w-22">
       {onSelect ? (
         <button
           type="button"

@@ -33,9 +33,9 @@ export function StoryRail({ stories, action, onStorySelect }: StoryRailProps) {
           <p className="mt-2 text-sm text-text-muted">添加一张图片，记录现在这一刻。</p>
         </div>
       ) : (
-        <ul className="-mx-4 mt-6 flex snap-x snap-proximity justify-start gap-3 overflow-x-auto overscroll-x-contain px-4 pb-3 sm:mx-0 sm:justify-center sm:px-0">
+        <ul className="mx-auto mt-8 grid max-w-xl grid-cols-3 gap-x-4 gap-y-7 sm:grid-cols-4">
           {stories.map((story) => (
-            <li key={story.id} className="snap-start">
+            <li key={story.id} className="flex justify-center">
               <StoryAvatar story={story} onSelect={onStorySelect ? () => onStorySelect(story) : undefined} />
             </li>
           ))}
