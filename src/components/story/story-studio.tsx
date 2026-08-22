@@ -1,10 +1,12 @@
 'use client';
 
-import { useEffect, useMemo } from 'react';
+import Image from 'next/image';
+import { useEffect, useMemo, useState } from 'react';
 import { useStore } from 'zustand';
 
 import { AddStoryButton } from '@/components/story/add-story-button';
 import { StoryRail } from '@/components/story/story-rail';
+import { Dialog, DialogContent, DialogDescription, DialogTitle } from '@/components/ui/dialog';
 import { storyStore, type StoryStoreApi } from '@/store/story-store';
 import { STORY_STORAGE_KEY, type StoryPreview } from '@/types/story';
 
@@ -22,6 +24,7 @@ export function StoryStudio({ store = storyStore }: StoryStudioProps) {
   const refresh = useStore(store, (state) => state.refresh);
   const addStory = useStore(store, (state) => state.addStory);
   const removeExpired = useStore(store, (state) => state.removeExpired);
+  const [selectedStoryId, setSelectedStoryId] = useState<string | null>(null);
 
   const storyPreviews = useMemo<StoryPreview[]>(
     () =>
@@ -36,6 +39,7 @@ export function StoryStudio({ store = storyStore }: StoryStudioProps) {
       })),
     [stories],
   );
+  const selectedStory = storyPreviews.find((story) => story.id === selectedStoryId);
 
   useEffect(() => {
     hydrate();
@@ -117,6 +121,9 @@ export function StoryStudio({ store = storyStore }: StoryStudioProps) {
               ) : (
                 <StoryRail
                   stories={storyPreviews}
+                  onStorySelect={(story) => {
+                    setSelectedStoryId(story.id);
+                  }}
                   action={
                     <AddStoryButton
                       onImageReady={(image) => {
@@ -142,6 +149,33 @@ export function StoryStudio({ store = storyStore }: StoryStudioProps) {
           </div>
         </footer>
       </div>
+
+      <Dialog
+        open={selectedStory !== undefined}
+        onOpenChange={(open) => {
+          if (!open) {
+            setSelectedStoryId(null);
+          }
+        }}
+      >
+        {selectedStory ? (
+          <DialogContent className="max-w-md border-border bg-viewer-bg p-3 text-viewer-text sm:p-4">
+            <DialogTitle className="sr-only">{selectedStory.label} Story</DialogTitle>
+
+            <DialogDescription className="sr-only">查看 {selectedStory.label} Story 图片</DialogDescription>
+
+            <div className="relative mx-auto aspect-[9/16] max-h-[78vh] w-full overflow-hidden rounded-panel bg-viewer-bg">
+              <Image
+                src={selectedStory.imageSrc}
+                alt={`${selectedStory.label} Story`}
+                fill
+                sizes="(max-width: 640px) calc(100vw - 2rem), 28rem"
+                className="object-contain"
+              />
+            </div>
+          </DialogContent>
+        ) : null}
+      </Dialog>
     </main>
   );
 }

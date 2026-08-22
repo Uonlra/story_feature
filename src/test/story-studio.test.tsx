@@ -1,4 +1,5 @@
 import { act, render, screen } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { StoryStudio } from '@/components/story/story-studio';
@@ -176,5 +177,65 @@ describe('StoryStudio expiry scheduling', () => {
     expect(screen.getByText('1 条记录')).toBeInTheDocument();
     expect(store.getState().stories).toEqual([newStory]);
     expect(repository.loadStories).toHaveBeenCalledTimes(2);
+  });
+
+  it('opens the selected story in a dialog and closes it', async () => {
+    const user = userEvent.setup();
+    const now = Date.now();
+    const story: Story = {
+      id: 'viewer-story',
+      imageDataUrl: 'data:image/webp;base64,encoded',
+      mimeType: 'image/webp',
+      width: 800,
+      height: 600,
+      createdAt: now,
+      expiresAt: now + STORY_LIFETIME_MS,
+    };
+    const repository: StoryRepository = {
+      loadStories: vi.fn().mockReturnValue([story]),
+      saveStories: vi.fn(),
+      clearStories: vi.fn(),
+    };
+    const store = createStoryStore(repository);
+
+    render(<StoryStudio store={store} />);
+
+    await user.click(await screen.findByRole('button', { name: /打开.*NO\. 1.*Story/ }));
+
+    expect(screen.getByRole('dialog')).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'NO. 1 Story' })).toBeInTheDocument();
+
+    await user.click(screen.getByRole('button', { name: '关闭对话框' }));
+
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+  });
+
+  it('closes the viewer with Escape', async () => {
+    const user = userEvent.setup();
+    const now = Date.now();
+    const story: Story = {
+      id: 'escape-story',
+      imageDataUrl: 'data:image/webp;base64,encoded',
+      mimeType: 'image/webp',
+      width: 800,
+      height: 600,
+      createdAt: now,
+      expiresAt: now + STORY_LIFETIME_MS,
+    };
+    const repository: StoryRepository = {
+      loadStories: vi.fn().mockReturnValue([story]),
+      saveStories: vi.fn(),
+      clearStories: vi.fn(),
+    };
+    const store = createStoryStore(repository);
+
+    render(<StoryStudio store={store} />);
+
+    await user.click(await screen.findByRole('button', { name: /打开.*NO\. 1.*Story/ }));
+    expect(screen.getByRole('dialog')).toBeInTheDocument();
+
+    await user.keyboard('{Escape}');
+
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
   });
 });
