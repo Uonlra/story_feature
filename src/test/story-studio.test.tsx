@@ -238,4 +238,96 @@ describe('StoryStudio expiry scheduling', () => {
 
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
   });
+
+  it('moves between stories with viewer controls', async () => {
+    const user = userEvent.setup();
+    const now = Date.now();
+
+    const stories: Story[] = [
+      {
+        id: 'first-story',
+        imageDataUrl: 'data:image/webp;base64,first',
+        mimeType: 'image/webp',
+        width: 800,
+        height: 600,
+        createdAt: now,
+        expiresAt: now + STORY_LIFETIME_MS,
+      },
+      {
+        id: 'second-story',
+        imageDataUrl: 'data:image/webp;base64,second',
+        mimeType: 'image/webp',
+        width: 800,
+        height: 600,
+        createdAt: now + 1_000,
+        expiresAt: now + 1_000 + STORY_LIFETIME_MS,
+      },
+    ];
+
+    const repository: StoryRepository = {
+      loadStories: vi.fn().mockReturnValue(stories),
+      saveStories: vi.fn(),
+      clearStories: vi.fn(),
+    };
+
+    const store = createStoryStore(repository);
+
+    render(<StoryStudio store={store} />);
+
+    await user.click(await screen.findByRole('button', { name: /打开.*NO\. 1.*Story/ }));
+
+    expect(screen.getByRole('button', { name: '上一条 Story' })).toBeDisabled();
+    expect(screen.getByRole('button', { name: '下一条 Story' })).toBeEnabled();
+
+    await user.click(screen.getByRole('button', { name: '下一条 Story' }));
+
+    expect(screen.getByRole('img', { name: /NO\. 2.*Story/ })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: '上一条 Story' })).toBeEnabled();
+    expect(screen.getByRole('button', { name: '下一条 Story' })).toBeDisabled();
+  });
+
+  it('moves between stories with arrow keys', async () => {
+    const user = userEvent.setup();
+    const now = Date.now();
+
+    const stories: Story[] = [
+      {
+        id: 'keyboard-first',
+        imageDataUrl: 'data:image/webp;base64,first',
+        mimeType: 'image/webp',
+        width: 800,
+        height: 600,
+        createdAt: now,
+        expiresAt: now + STORY_LIFETIME_MS,
+      },
+      {
+        id: 'keyboard-second',
+        imageDataUrl: 'data:image/webp;base64,second',
+        mimeType: 'image/webp',
+        width: 800,
+        height: 600,
+        createdAt: now + 1_000,
+        expiresAt: now + 1_000 + STORY_LIFETIME_MS,
+      },
+    ];
+
+    const repository: StoryRepository = {
+      loadStories: vi.fn().mockReturnValue(stories),
+      saveStories: vi.fn(),
+      clearStories: vi.fn(),
+    };
+
+    const store = createStoryStore(repository);
+
+    render(<StoryStudio store={store} />);
+
+    await user.click(await screen.findByRole('button', { name: /打开.*NO\. 1.*Story/ }));
+    await user.keyboard('{ArrowRight}');
+
+    expect(screen.getByRole('img', { name: /NO\. 2.*Story/ })).toBeInTheDocument();
+
+    await user.keyboard('{ArrowLeft}');
+
+    expect(screen.getByRole('img', { name: /NO\. 1.*Story/ })).toBeInTheDocument();
+  });
 });
