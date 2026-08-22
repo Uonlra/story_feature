@@ -1,5 +1,6 @@
 import { render, screen, within } from '@testing-library/react';
-import { describe, expect, it } from 'vitest';
+import userEvent from '@testing-library/user-event';
+import { describe, expect, it, vi } from 'vitest';
 
 import { StoryRail } from '@/components/story/story-rail';
 import { storyFixtures } from '@/data/story-fixtures';
@@ -29,5 +30,16 @@ describe('StoryRail', () => {
     expect(status).toHaveTextContent('添加一张图片，记录现在这一刻。');
     expect(screen.getByText('0 条记录')).toBeInTheDocument();
     expect(screen.queryByRole('list')).not.toBeInTheDocument();
+  });
+
+  it('calls onStorySelect when a story trigger is activated', async () => {
+    const user = userEvent.setup();
+    const onStorySelect = vi.fn();
+
+    render(<StoryRail stories={storyFixtures} onStorySelect={onStorySelect} />);
+
+    await user.click(screen.getByRole('button', { name: '打开 清晨 Story' }));
+
+    expect(onStorySelect).toHaveBeenCalledWith(storyFixtures[0]);
   });
 });

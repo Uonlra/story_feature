@@ -5,9 +5,10 @@ import type { ReactNode } from 'react';
 type StoryRailProps = {
   stories: readonly StoryPreview[];
   action?: ReactNode;
+  onStorySelect?: (story: StoryPreview) => void;
 };
 
-export function StoryRail({ stories, action }: StoryRailProps) {
+export function StoryRail({ stories, action, onStorySelect }: StoryRailProps) {
   return (
     <section aria-labelledby="story-rail-title">
       <div className="flex flex-col items-center gap-4 text-center">
@@ -35,7 +36,7 @@ export function StoryRail({ stories, action }: StoryRailProps) {
         <ul className="-mx-4 mt-6 flex snap-x snap-proximity justify-start gap-3 overflow-x-auto overscroll-x-contain px-4 pb-3 sm:mx-0 sm:justify-center sm:px-0">
           {stories.map((story) => (
             <li key={story.id} className="snap-start">
-              <StoryAvatar story={story} />
+              <StoryAvatar story={story} onSelect={onStorySelect ? () => onStorySelect(story) : undefined} />
             </li>
           ))}
         </ul>
