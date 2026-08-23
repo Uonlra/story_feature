@@ -1,6 +1,6 @@
 import { createStore, type StoreApi } from 'zustand/vanilla';
 
-import type { EncodedImage } from '@/lib/image-processing';
+import type { ProcessedImage } from '@/lib/image-processing';
 import { createStory, removeExpiredStories, sortStoriesByCreatedAt } from '@/lib/story-utils';
 import { storyRepository, type StoryRepository } from '@/services/story-repository';
 import type { Story } from '@/types/story';
@@ -13,13 +13,14 @@ export type StoryStoreState = {
   stories: Story[];
   status: StoryStoreStatus;
   errorMessage: string | null;
-  hydrate: () => void;
-  refresh: () => void;
-  addStory: (image: EncodedImage) => Story;
-  deleteStory: (storyId: string) => void;
-  clearStories: () => void;
+  hydrate: () => Promise<void>;
+  refresh: () => Promise<void>;
+  addStory: (image: ProcessedImage) => Promise<Story>;
+  loadOriginalImage: (storyId: string) => Promise<Blob | null>;
+  deleteStory: (storyId: string) => Promise<void>;
+  clearStories: () => Promise<void>;
   clearError: () => void;
-  removeExpired: (now?: number) => void;
+  removeExpired: (now?: number) => Promise<void>;
 };
 
 export type StoryStoreApi = StoreApi<StoryStoreState>;
@@ -30,14 +31,14 @@ function errorMessage(error: unknown): string {
 
 export function createStoryStore(repository: StoryRepository = storyRepository): StoryStoreApi {
   return createStore<StoryStoreState>()((set, get) => {
-    function readStories(showLoading: boolean): void {
+    async function readStories(showLoading: boolean): Promise<void> {
       if (showLoading) {
         set({ status: 'loading', errorMessage: null });
       }
 
       try {
         set({
-          stories: repository.loadStories(),
+          stories: await repository.loadStories(),
           status: 'ready',
           errorMessage: null,
         });
@@ -56,7 +57,7 @@ export function createStoryStore(repository: StoryRepository = storyRepository):
       errorMessage: null,
       hydrate: () => readStories(true),
       refresh: () => readStories(false),
-      addStory: (image) => {
+      addStory: async (image) => {
         const currentStories = removeExpiredStories(get().stories);
 
         if (currentStories.length >= MAX_STORY_COUNT) {
@@ -70,11 +71,16 @@ export function createStoryStore(repository: StoryRepository = storyRepository):
           mimeType: image.mimeType,
           width: image.width,
           height: image.height,
+          originalWidth: image.originalWidth,
+          originalHeight: image.originalHeight,
         });
         const nextStories = sortStoriesByCreatedAt([...currentStories, story]);
 
         try {
-          repository.saveStories(nextStories);
+          await repository.saveStory(story, image.originalBlob);
+          if (currentStories.length !== get().stories.length) {
+            await repository.saveStories(nextStories);
+          }
           set({ stories: nextStories, status: 'ready', errorMessage: null });
           return story;
         } catch (error) {
@@ -82,20 +88,26 @@ export function createStoryStore(repository: StoryRepository = storyRepository):
           throw error;
         }
       },
-      deleteStory: (storyId) => {
-        const nextStories = get().stories.filter((story) => story.id !== storyId);
-
+      loadOriginalImage: async (storyId) => {
         try {
-          repository.saveStories(nextStories);
-          set({ stories: nextStories, errorMessage: null });
+          return await repository.loadOriginalImage(storyId);
+        } catch (error) {
+          set({ errorMessage: errorMessage(error) });
+          return null;
+        }
+      },
+      deleteStory: async (storyId) => {
+        try {
+          await repository.deleteStory(storyId);
+          set({ stories: get().stories.filter((story) => story.id !== storyId), errorMessage: null });
         } catch (error) {
           set({ errorMessage: errorMessage(error) });
           throw error;
         }
       },
-      clearStories: () => {
+      clearStories: async () => {
         try {
-          repository.clearStories();
+          await repository.clearStories();
           set({ stories: [], status: 'ready', errorMessage: null });
         } catch (error) {
           set({ errorMessage: errorMessage(error) });
@@ -103,7 +115,7 @@ export function createStoryStore(repository: StoryRepository = storyRepository):
         }
       },
       clearError: () => set({ errorMessage: null }),
-      removeExpired: (now = Date.now()) => {
+      removeExpired: async (now = Date.now()) => {
         const currentStories = get().stories;
         const validStories = removeExpiredStories(currentStories, now);
 
@@ -112,7 +124,7 @@ export function createStoryStore(repository: StoryRepository = storyRepository):
         }
 
         try {
-          repository.saveStories(validStories);
+          await repository.saveStories(validStories);
           set({ stories: validStories, errorMessage: null });
         } catch (error) {
           set({

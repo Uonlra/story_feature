@@ -22,6 +22,7 @@ export function StoryStudio({ store = storyStore }: StoryStudioProps) {
   const hydrate = useStore(store, (state) => state.hydrate);
   const refresh = useStore(store, (state) => state.refresh);
   const addStory = useStore(store, (state) => state.addStory);
+  const loadOriginalImage = useStore(store, (state) => state.loadOriginalImage);
   const removeExpired = useStore(store, (state) => state.removeExpired);
   const [selectedStoryId, setSelectedStoryId] = useState<string | null>(null);
 
@@ -33,6 +34,8 @@ export function StoryStudio({ store = storyStore }: StoryStudioProps) {
         label: ` NO. ${index + 1} `,
         width: story.width,
         height: story.height,
+        originalWidth: story.originalWidth,
+        originalHeight: story.originalHeight,
         createdAt: story.createdAt,
         expiresAt: story.expiresAt,
       })),
@@ -57,23 +60,23 @@ export function StoryStudio({ store = storyStore }: StoryStudioProps) {
   }
 
   useEffect(() => {
-    hydrate();
+    void hydrate();
   }, [hydrate]);
 
   useEffect(() => {
     function handleFocus() {
-      removeExpired();
+      void removeExpired();
     }
 
     function handleVisibilityChange() {
       if (document.visibilityState === 'visible') {
-        removeExpired();
+        void removeExpired();
       }
     }
 
     function handleStorage(event: StorageEvent) {
       if (event.key === STORY_STORAGE_KEY || event.key === null) {
-        refresh();
+        void refresh();
       }
     }
 
@@ -95,7 +98,7 @@ export function StoryStudio({ store = storyStore }: StoryStudioProps) {
 
     const nearestExpiry = Math.min(...stories.map((story) => story.expiresAt));
     const delay = Math.min(Math.max(nearestExpiry - Date.now() + 10, 0), MAX_TIMER_DELAY);
-    const timer = window.setTimeout(() => removeExpired(), delay);
+    const timer = window.setTimeout(() => void removeExpired(), delay);
 
     return () => window.clearTimeout(timer);
   }, [removeExpired, status, stories]);
@@ -144,7 +147,7 @@ export function StoryStudio({ store = storyStore }: StoryStudioProps) {
                   action={
                     <AddStoryButton
                       onImageReady={(image) => {
-                        addStory(image);
+                        return addStory(image);
                       }}
                     />
                   }
@@ -169,10 +172,13 @@ export function StoryStudio({ store = storyStore }: StoryStudioProps) {
 
       <StoryViewer
         story={selectedStory}
+        storyCount={storyPreviews.length}
+        storyIndex={selectedStoryIndex}
         canGoPrevious={canGoPrevious}
         canGoNext={canGoNext}
         onPrevious={showPreviousStory}
         onNext={showNextStory}
+        loadOriginalImage={loadOriginalImage}
         onOpenChange={(open) => {
           if (!open) {
             setSelectedStoryId(null);
