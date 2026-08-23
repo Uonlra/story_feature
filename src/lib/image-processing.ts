@@ -21,6 +21,12 @@ export type EncodedImage = ImageDimensions & {
   mimeType: StoryMimeType;
 };
 
+export type ProcessedImage = EncodedImage & {
+  originalBlob: Blob;
+  originalWidth: number;
+  originalHeight: number;
+};
+
 export const SUPPORTED_IMAGE_MIME_TYPES = [
   'image/jpeg',
   'image/png',
@@ -163,12 +169,17 @@ export function exportImageToDataUrl(
   }
 }
 
-export async function processImageFile(file: File): Promise<EncodedImage> {
+export async function processImageFile(file: File): Promise<ProcessedImage> {
   const decoded = await decodeImageFile(file);
 
   try {
     const target = calculateTargetDimensions(decoded);
-    return exportImageToDataUrl(decoded, target);
+    return {
+      ...exportImageToDataUrl(decoded, target),
+      originalBlob: file.slice(0, file.size, file.type),
+      originalWidth: decoded.width,
+      originalHeight: decoded.height,
+    };
   } finally {
     decoded.dispose();
   }
