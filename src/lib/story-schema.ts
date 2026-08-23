@@ -11,6 +11,8 @@ export const storySchema: z.ZodType<Story> = z
     mimeType: storyMimeTypeSchema,
     width: z.number().int().positive(),
     height: z.number().int().positive(),
+    originalWidth: z.number().int().positive().optional(),
+    originalHeight: z.number().int().positive().optional(),
     createdAt: z.number().int().nonnegative(),
     expiresAt: z.number().int().nonnegative(),
   })

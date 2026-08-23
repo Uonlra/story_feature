@@ -1,14 +1,13 @@
 'use client';
 
-import Image from 'next/image';
 import { useEffect, useMemo, useState } from 'react';
 import { useStore } from 'zustand';
 
 import { AddStoryButton } from '@/components/story/add-story-button';
 import { StoryRail } from '@/components/story/story-rail';
-import { Dialog, DialogContent, DialogDescription, DialogTitle } from '@/components/ui/dialog';
 import { storyStore, type StoryStoreApi } from '@/store/story-store';
 import { STORY_STORAGE_KEY, type StoryPreview } from '@/types/story';
+import { StoryViewer } from '@/components/story/story-viewer';
 
 const MAX_TIMER_DELAY = 2_147_483_647;
 
@@ -23,6 +22,7 @@ export function StoryStudio({ store = storyStore }: StoryStudioProps) {
   const hydrate = useStore(store, (state) => state.hydrate);
   const refresh = useStore(store, (state) => state.refresh);
   const addStory = useStore(store, (state) => state.addStory);
+  const loadOriginalImage = useStore(store, (state) => state.loadOriginalImage);
   const removeExpired = useStore(store, (state) => state.removeExpired);
   const [selectedStoryId, setSelectedStoryId] = useState<string | null>(null);
 
@@ -34,6 +34,8 @@ export function StoryStudio({ store = storyStore }: StoryStudioProps) {
         label: ` NO. ${index + 1} `,
         width: story.width,
         height: story.height,
+        originalWidth: story.originalWidth,
+        originalHeight: story.originalHeight,
         createdAt: story.createdAt,
         expiresAt: story.expiresAt,
       })),
@@ -41,24 +43,40 @@ export function StoryStudio({ store = storyStore }: StoryStudioProps) {
   );
   const selectedStory = storyPreviews.find((story) => story.id === selectedStoryId);
 
+  const selectedStoryIndex = storyPreviews.findIndex((story) => story.id === selectedStoryId);
+  const canGoPrevious = selectedStoryIndex > 0;
+  const canGoNext = selectedStoryIndex >= 0 && selectedStoryIndex < storyPreviews.length - 1;
+
+  function showPreviousStory() {
+    if (canGoPrevious) {
+      setSelectedStoryId(storyPreviews[selectedStoryIndex - 1].id);
+    }
+  }
+
+  function showNextStory() {
+    if (canGoNext) {
+      setSelectedStoryId(storyPreviews[selectedStoryIndex + 1].id);
+    }
+  }
+
   useEffect(() => {
-    hydrate();
+    void hydrate();
   }, [hydrate]);
 
   useEffect(() => {
     function handleFocus() {
-      removeExpired();
+      void removeExpired();
     }
 
     function handleVisibilityChange() {
       if (document.visibilityState === 'visible') {
-        removeExpired();
+        void removeExpired();
       }
     }
 
     function handleStorage(event: StorageEvent) {
       if (event.key === STORY_STORAGE_KEY || event.key === null) {
-        refresh();
+        void refresh();
       }
     }
 
@@ -80,7 +98,7 @@ export function StoryStudio({ store = storyStore }: StoryStudioProps) {
 
     const nearestExpiry = Math.min(...stories.map((story) => story.expiresAt));
     const delay = Math.min(Math.max(nearestExpiry - Date.now() + 10, 0), MAX_TIMER_DELAY);
-    const timer = window.setTimeout(() => removeExpired(), delay);
+    const timer = window.setTimeout(() => void removeExpired(), delay);
 
     return () => window.clearTimeout(timer);
   }, [removeExpired, status, stories]);
@@ -102,15 +120,17 @@ export function StoryStudio({ store = storyStore }: StoryStudioProps) {
 
         <div className="flex-1 px-4 py-12 sm:px-6 md:py-16 lg:px-8">
           <section className="mx-auto w-full max-w-3xl text-center">
-            <h1 className="[overflow-wrap:anywhere] text-4xl leading-tight font-semibold sm:text-5xl">24H Story</h1>
+            <div className="pb-10 sm:pb-12">
+              <h1 className="[overflow-wrap:anywhere] text-4xl leading-tight font-semibold sm:text-5xl">24H Story</h1>
 
-            <p className="mt-5 text-center text-base leading-7 text-text-muted sm:text-lg sm:leading-8">
-              24 小时后过期。
-            </p>
+              <p className="mt-5 text-center text-base leading-7 text-text-muted sm:text-lg sm:leading-8">
+                24 小时后过期。
+              </p>
 
-            <p className="mt-5 font-mono text-xs text-text-subtle">Local · ≤10 MB · 1080×1920 · 24h</p>
+              <p className="mt-5 font-mono text-xs text-text-subtle">Local · ≤10 MB · 1080×1920 · 24h</p>
+            </div>
 
-            <div className="mt-12">
+            <div className="border-y border-border py-8 sm:py-10">
               {isLoading ? (
                 <div
                   role="status"
@@ -127,7 +147,7 @@ export function StoryStudio({ store = storyStore }: StoryStudioProps) {
                   action={
                     <AddStoryButton
                       onImageReady={(image) => {
-                        addStory(image);
+                        return addStory(image);
                       }}
                     />
                   }
@@ -135,7 +155,7 @@ export function StoryStudio({ store = storyStore }: StoryStudioProps) {
               )}
 
               {errorMessage ? (
-                <p role="alert" className="mt-4 text-sm text-destructive">
+                <p role="alert" className="mt-5 border-t border-destructive/30 pt-4 text-sm text-destructive">
                   {errorMessage}
                 </p>
               ) : null}
@@ -150,32 +170,21 @@ export function StoryStudio({ store = storyStore }: StoryStudioProps) {
         </footer>
       </div>
 
-      <Dialog
-        open={selectedStory !== undefined}
+      <StoryViewer
+        story={selectedStory}
+        storyCount={storyPreviews.length}
+        storyIndex={selectedStoryIndex}
+        canGoPrevious={canGoPrevious}
+        canGoNext={canGoNext}
+        onPrevious={showPreviousStory}
+        onNext={showNextStory}
+        loadOriginalImage={loadOriginalImage}
         onOpenChange={(open) => {
           if (!open) {
             setSelectedStoryId(null);
           }
         }}
-      >
-        {selectedStory ? (
-          <DialogContent className="max-w-md border-border bg-viewer-bg p-3 text-viewer-text sm:p-4">
-            <DialogTitle className="sr-only">{selectedStory.label} Story</DialogTitle>
-
-            <DialogDescription className="sr-only">查看 {selectedStory.label} Story 图片</DialogDescription>
-
-            <div className="relative mx-auto aspect-[9/16] max-h-[78vh] w-full overflow-hidden rounded-panel bg-viewer-bg">
-              <Image
-                src={selectedStory.imageSrc}
-                alt={`${selectedStory.label} Story`}
-                fill
-                sizes="(max-width: 640px) calc(100vw - 2rem), 28rem"
-                className="object-contain"
-              />
-            </div>
-          </DialogContent>
-        ) : null}
-      </Dialog>
+      />
     </main>
   );
 }

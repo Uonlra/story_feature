@@ -2,11 +2,11 @@
 
 import { useRef, useState } from 'react';
 
-import { processImageFile, type EncodedImage } from '@/lib/image-processing';
+import { processImageFile, type ProcessedImage } from '@/lib/image-processing';
 
 type AddStoryButtonProps = {
-  onImageReady: (image: EncodedImage) => void | Promise<void>;
-  processFile?: (file: File) => Promise<EncodedImage>;
+  onImageReady: (image: ProcessedImage) => void | Promise<unknown>;
+  processFile?: (file: File) => Promise<ProcessedImage>;
 };
 
 export function AddStoryButton({ onImageReady, processFile = processImageFile }: AddStoryButtonProps) {

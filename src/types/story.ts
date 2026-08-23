@@ -8,6 +8,9 @@ type StoryBase = {
   id: string;
   width: number;
   height: number;
+  /** Dimensions of the original image kept in IndexedDB. */
+  originalWidth?: number;
+  originalHeight?: number;
   createdAt: number;
   expiresAt: number;
 };

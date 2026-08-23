@@ -5,6 +5,8 @@ export type CreateStoryInput = {
   mimeType: StoryMimeType;
   width: number;
   height: number;
+  originalWidth?: number;
+  originalHeight?: number;
 };
 
 export type CreateStoryOptions = {
@@ -21,6 +23,8 @@ export function createStory(input: CreateStoryInput, options: CreateStoryOptions
     mimeType: input.mimeType,
     width: input.width,
     height: input.height,
+    ...(input.originalWidth === undefined ? {} : { originalWidth: input.originalWidth }),
+    ...(input.originalHeight === undefined ? {} : { originalHeight: input.originalHeight }),
     createdAt,
     expiresAt: createdAt + STORY_LIFETIME_MS,
   };

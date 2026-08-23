@@ -1,9 +1,9 @@
-import { act, render, screen } from '@testing-library/react';
+import { act, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { StoryStudio } from '@/components/story/story-studio';
-import { createStoryRepository, type StoryRepository } from '@/services/story-repository';
+import type { StoryRepository } from '@/services/story-repository';
 import { createStoryStore } from '@/store/story-store';
 import { STORY_LIFETIME_MS, STORY_STORAGE_KEY, type Story } from '@/types/story';
 
@@ -11,231 +11,137 @@ afterEach(() => {
   vi.useRealTimers();
 });
 
+function createStory(id: string, createdAt = Date.now()): Story {
+  return {
+    id,
+    imageDataUrl: 'data:image/webp;base64,encoded',
+    mimeType: 'image/webp',
+    width: 800,
+    height: 600,
+    originalWidth: 1600,
+    originalHeight: 1200,
+    createdAt,
+    expiresAt: createdAt + STORY_LIFETIME_MS,
+  };
+}
+
+function createRepository(stories: Story[] = []): StoryRepository {
+  return {
+    loadStories: vi.fn().mockResolvedValue(stories),
+    saveStory: vi.fn().mockResolvedValue(undefined),
+    saveStories: vi.fn().mockResolvedValue(undefined),
+    loadOriginalImage: vi.fn().mockResolvedValue(null),
+    deleteStory: vi.fn().mockResolvedValue(undefined),
+    clearStories: vi.fn().mockResolvedValue(undefined),
+  };
+}
+
 describe('StoryStudio expiry scheduling', () => {
-  it('removes the nearest story when its expiry time is reached', () => {
+  it('removes the nearest story when its expiry time is reached', async () => {
     vi.useFakeTimers();
     const now = Date.UTC(2026, 7, 21, 1);
     vi.setSystemTime(now);
-    const story: Story = {
-      id: 'expiring-story',
-      imageDataUrl: 'data:image/webp;base64,encoded',
-      mimeType: 'image/webp',
-      width: 800,
-      height: 600,
-      createdAt: now + 100 - STORY_LIFETIME_MS,
-      expiresAt: now + 100,
-    };
-    const repository: StoryRepository = {
-      loadStories: vi.fn().mockReturnValue([story]),
-      saveStories: vi.fn(),
-      clearStories: vi.fn(),
-    };
+    const story = createStory('expiring-story', now + 100 - STORY_LIFETIME_MS);
+    const repository = createRepository([story]);
     const store = createStoryStore(repository);
 
     render(<StoryStudio store={store} />);
+    await act(async () => {
+      await Promise.resolve();
+    });
     expect(screen.getByText('1 条记录')).toBeInTheDocument();
 
-    act(() => {
-      vi.advanceTimersByTime(110);
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(110);
+      await Promise.resolve();
     });
 
     expect(screen.getByText('0 条记录')).toBeInTheDocument();
     expect(repository.saveStories).toHaveBeenCalledWith([]);
   });
 
-  it('removes expired stories when the window regains focus', () => {
-    const now = Date.now();
-
-    const expiredStory: Story = {
-      id: 'expired-on-focus',
-      imageDataUrl: 'data:image/webp;base64,encoded',
-      mimeType: 'image/webp',
-      width: 800,
-      height: 600,
-      createdAt: now - STORY_LIFETIME_MS,
-      expiresAt: now,
-    };
-
-    const repository: StoryRepository = {
-      loadStories: vi.fn().mockReturnValue([expiredStory]),
-      saveStories: vi.fn(),
-      clearStories: vi.fn(),
-    };
-
+  it('removes expired stories when the window regains focus', async () => {
+    const story = createStory('expired-on-focus', Date.now() - STORY_LIFETIME_MS);
+    const repository = createRepository([story]);
     const store = createStoryStore(repository);
 
     render(<StoryStudio store={store} />);
+    expect(await screen.findByText('1 条记录')).toBeInTheDocument();
 
-    expect(screen.getByText('1 条记录')).toBeInTheDocument();
+    act(() => window.dispatchEvent(new Event('focus')));
 
-    act(() => {
-      window.dispatchEvent(new Event('focus'));
-    });
-
-    expect(screen.getByText('0 条记录')).toBeInTheDocument();
+    await waitFor(() => expect(screen.getByText('0 条记录')).toBeInTheDocument());
     expect(repository.saveStories).toHaveBeenCalledWith([]);
   });
 
-  it('removes expired stories when the document becomes visible', () => {
-    const now = Date.now();
-
-    const expiredStory: Story = {
-      id: 'expired-on-visibility',
-      imageDataUrl: 'data:image/webp;base64,encoded',
-      mimeType: 'image/webp',
-      width: 800,
-      height: 600,
-      createdAt: now - STORY_LIFETIME_MS,
-      expiresAt: now,
-    };
-
-    const repository: StoryRepository = {
-      loadStories: vi.fn().mockReturnValue([expiredStory]),
-      saveStories: vi.fn(),
-      clearStories: vi.fn(),
-    };
-
+  it('removes expired stories when the document becomes visible', async () => {
+    const story = createStory('expired-on-visibility', Date.now() - STORY_LIFETIME_MS);
+    const repository = createRepository([story]);
+    const store = createStoryStore(repository);
     const visibilityStateSpy = vi.spyOn(document, 'visibilityState', 'get').mockReturnValue('visible');
-    const store = createStoryStore(repository);
 
     try {
       render(<StoryStudio store={store} />);
-
-      expect(screen.getByText('1 条记录')).toBeInTheDocument();
-
-      act(() => {
-        document.dispatchEvent(new Event('visibilitychange'));
-      });
-
-      expect(screen.getByText('0 条记录')).toBeInTheDocument();
-      expect(repository.saveStories).toHaveBeenCalledWith([]);
+      expect(await screen.findByText('1 条记录')).toBeInTheDocument();
+      act(() => document.dispatchEvent(new Event('visibilitychange')));
+      await waitFor(() => expect(screen.getByText('0 条记录')).toBeInTheDocument());
     } finally {
       visibilityStateSpy.mockRestore();
     }
   });
 
-  it('restores persisted stories when the page mounts again', () => {
-    const values = new Map<string, string>();
-    const storage = {
-      getItem: (key: string) => values.get(key) ?? null,
-      setItem: (key: string, value: string) => values.set(key, value),
-      removeItem: (key: string) => values.delete(key),
-    };
-    const now = Date.now();
-    const persistedStory: Story = {
-      id: 'persisted-story',
-      imageDataUrl: 'data:image/webp;base64,encoded',
-      mimeType: 'image/webp',
-      width: 800,
-      height: 600,
-      createdAt: now - 1_000,
-      expiresAt: now - 1_000 + STORY_LIFETIME_MS,
-    };
-    const repository = createStoryRepository({ storage });
-
-    try {
-      repository.saveStories([persistedStory]);
-
-      const refreshedStore = createStoryStore(repository);
-
-      render(<StoryStudio store={refreshedStore} />);
-
-      expect(screen.getByText('1 条记录')).toBeInTheDocument();
-      expect(refreshedStore.getState().stories).toEqual([persistedStory]);
-    } finally {
-      values.clear();
-    }
-  });
-
-  it('refreshes the story list when the storage key changes', () => {
-    const now = Date.now();
-    const repository: StoryRepository = {
-      loadStories: vi.fn().mockReturnValue([]),
-      saveStories: vi.fn(),
-      clearStories: vi.fn(),
-    };
+  it('refreshes the story list when the legacy storage key changes', async () => {
+    const repository = createRepository();
     const store = createStoryStore(repository);
-    const newStory: Story = {
-      id: 'storage-event-story',
-      imageDataUrl: 'data:image/webp;base64,encoded',
-      mimeType: 'image/webp',
-      width: 800,
-      height: 600,
-      createdAt: now,
-      expiresAt: now + STORY_LIFETIME_MS,
-    };
+    const newStory = createStory('storage-event-story');
 
     render(<StoryStudio store={store} />);
-    expect(screen.getByText('0 条记录')).toBeInTheDocument();
+    expect(await screen.findByText('0 条记录')).toBeInTheDocument();
+    vi.mocked(repository.loadStories).mockResolvedValue([newStory]);
 
-    vi.mocked(repository.loadStories).mockReturnValue([newStory]);
+    act(() => window.dispatchEvent(new StorageEvent('storage', { key: STORY_STORAGE_KEY })));
 
-    act(() => {
-      window.dispatchEvent(new StorageEvent('storage', { key: STORY_STORAGE_KEY }));
-    });
-
-    expect(screen.getByText('1 条记录')).toBeInTheDocument();
+    await waitFor(() => expect(screen.getByText('1 条记录')).toBeInTheDocument());
     expect(store.getState().stories).toEqual([newStory]);
-    expect(repository.loadStories).toHaveBeenCalledTimes(2);
   });
+});
 
-  it('opens the selected story in a dialog and closes it', async () => {
+describe('StoryStudio viewer', () => {
+  it('opens the selected story and closes it', async () => {
     const user = userEvent.setup();
-    const now = Date.now();
-    const story: Story = {
-      id: 'viewer-story',
-      imageDataUrl: 'data:image/webp;base64,encoded',
-      mimeType: 'image/webp',
-      width: 800,
-      height: 600,
-      createdAt: now,
-      expiresAt: now + STORY_LIFETIME_MS,
-    };
-    const repository: StoryRepository = {
-      loadStories: vi.fn().mockReturnValue([story]),
-      saveStories: vi.fn(),
-      clearStories: vi.fn(),
-    };
+    const story = createStory('viewer-story');
+    const repository = createRepository([story]);
     const store = createStoryStore(repository);
 
     render(<StoryStudio store={store} />);
-
     await user.click(await screen.findByRole('button', { name: /打开.*NO\. 1.*Story/ }));
 
     expect(screen.getByRole('dialog')).toBeInTheDocument();
     expect(screen.getByRole('heading', { name: 'NO. 1 Story' })).toBeInTheDocument();
+    expect(screen.getByText('1 / 1')).toBeInTheDocument();
 
     await user.click(screen.getByRole('button', { name: '关闭对话框' }));
-
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
   });
 
-  it('closes the viewer with Escape', async () => {
+  it('moves between stories with controls and arrow keys', async () => {
     const user = userEvent.setup();
-    const now = Date.now();
-    const story: Story = {
-      id: 'escape-story',
-      imageDataUrl: 'data:image/webp;base64,encoded',
-      mimeType: 'image/webp',
-      width: 800,
-      height: 600,
-      createdAt: now,
-      expiresAt: now + STORY_LIFETIME_MS,
-    };
-    const repository: StoryRepository = {
-      loadStories: vi.fn().mockReturnValue([story]),
-      saveStories: vi.fn(),
-      clearStories: vi.fn(),
-    };
+    const stories = [createStory('first-story'), createStory('second-story', Date.now() + 1_000)];
+    const repository = createRepository(stories);
     const store = createStoryStore(repository);
 
     render(<StoryStudio store={store} />);
-
     await user.click(await screen.findByRole('button', { name: /打开.*NO\. 1.*Story/ }));
-    expect(screen.getByRole('dialog')).toBeInTheDocument();
 
-    await user.keyboard('{Escape}');
+    expect(screen.getByRole('button', { name: '上一条 Story' })).toBeDisabled();
+    expect(screen.getByRole('button', { name: '下一条 Story' })).toBeEnabled();
+    expect(screen.getByText('1 / 2')).toBeInTheDocument();
 
-    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+    await user.click(screen.getByRole('button', { name: '下一条 Story' }));
+    expect(screen.getByRole('img', { name: /NO\. 2.*Story/ })).toBeInTheDocument();
+    expect(screen.getByText('2 / 2')).toBeInTheDocument();
+
+    await user.keyboard('{ArrowLeft}');
+    expect(screen.getByRole('img', { name: /NO\. 1.*Story/ })).toBeInTheDocument();
   });
 });

@@ -3,13 +3,16 @@ import userEvent from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';
 
 import { AddStoryButton } from '@/components/story/add-story-button';
-import type { EncodedImage } from '@/lib/image-processing';
+import type { ProcessedImage } from '@/lib/image-processing';
 
-const encodedImage: EncodedImage = {
+const encodedImage: ProcessedImage = {
   dataUrl: 'data:image/webp;base64,encoded',
   mimeType: 'image/webp',
   width: 800,
   height: 600,
+  originalBlob: new Blob(['original'], { type: 'image/webp' }),
+  originalWidth: 1600,
+  originalHeight: 1200,
 };
 
 function createImageFile() {
@@ -43,9 +46,9 @@ describe('AddStoryButton', () => {
 
   it('disables the trigger while processing to prevent duplicate work', async () => {
     const user = userEvent.setup();
-    let resolveProcessing: (image: EncodedImage) => void = () => undefined;
+    let resolveProcessing: (image: ProcessedImage) => void = () => undefined;
     const processFile = vi.fn().mockReturnValue(
-      new Promise<EncodedImage>((resolve) => {
+      new Promise<ProcessedImage>((resolve) => {
         resolveProcessing = resolve;
       }),
     );
