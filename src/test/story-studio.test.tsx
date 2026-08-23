@@ -1,8 +1,9 @@
-import { act, render, screen, waitFor } from '@testing-library/react';
+import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { StoryStudio } from '@/components/story/story-studio';
+import { STORY_AUTOPLAY_DELAY_MS } from '@/components/story/story-viewer';
 import type { StoryRepository } from '@/services/story-repository';
 import { createStoryStore } from '@/store/story-store';
 import { STORY_LIFETIME_MS, STORY_STORAGE_KEY, type Story } from '@/types/story';
@@ -143,5 +144,78 @@ describe('StoryStudio viewer', () => {
 
     await user.keyboard('{ArrowLeft}');
     expect(screen.getByRole('img', { name: /NO\. 1.*Story/ })).toBeInTheDocument();
+  });
+
+  it('advances every five seconds and closes after the last story', async () => {
+    vi.useFakeTimers();
+    const stories = [createStory('autoplay-first'), createStory('autoplay-second', Date.now() + 1_000)];
+    const repository = createRepository(stories);
+    const store = createStoryStore(repository);
+
+    render(<StoryStudio store={store} />);
+    await act(async () => {
+      await Promise.resolve();
+    });
+    fireEvent.click(screen.getByRole('button', { name: /打开.*NO\. 1.*Story/ }));
+
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(STORY_AUTOPLAY_DELAY_MS - 1);
+    });
+    expect(screen.getByText('1 / 2')).toBeInTheDocument();
+
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(1);
+      await Promise.resolve();
+    });
+    expect(screen.getByText('2 / 2')).toBeInTheDocument();
+
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(STORY_AUTOPLAY_DELAY_MS);
+      await Promise.resolve();
+    });
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+  });
+
+  it('pauses autoplay while the page is hidden and resumes remaining time when visible', async () => {
+    vi.useFakeTimers();
+    const visibilityStateSpy = vi.spyOn(document, 'visibilityState', 'get').mockReturnValue('visible');
+    const stories = [createStory('pause-first'), createStory('pause-second', Date.now() + 1_000)];
+    const repository = createRepository(stories);
+    const store = createStoryStore(repository);
+
+    try {
+      render(<StoryStudio store={store} />);
+      await act(async () => {
+        await Promise.resolve();
+      });
+      fireEvent.click(screen.getByRole('button', { name: /打开.*NO\. 1.*Story/ }));
+
+      await act(async () => {
+        await vi.advanceTimersByTimeAsync(2_000);
+      });
+      visibilityStateSpy.mockReturnValue('hidden');
+      act(() => document.dispatchEvent(new Event('visibilitychange')));
+
+      await act(async () => {
+        await vi.advanceTimersByTimeAsync(STORY_AUTOPLAY_DELAY_MS);
+      });
+      expect(screen.getByText('1 / 2')).toBeInTheDocument();
+
+      visibilityStateSpy.mockReturnValue('visible');
+      act(() => document.dispatchEvent(new Event('visibilitychange')));
+
+      await act(async () => {
+        await vi.advanceTimersByTimeAsync(STORY_AUTOPLAY_DELAY_MS - 2_001);
+      });
+      expect(screen.getByText('1 / 2')).toBeInTheDocument();
+
+      await act(async () => {
+        await vi.advanceTimersByTimeAsync(1);
+        await Promise.resolve();
+      });
+      expect(screen.getByText('2 / 2')).toBeInTheDocument();
+    } finally {
+      visibilityStateSpy.mockRestore();
+    }
   });
 });

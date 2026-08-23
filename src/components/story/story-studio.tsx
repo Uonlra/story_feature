@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useStore } from 'zustand';
 
 import { AddStoryButton } from '@/components/story/add-story-button';
@@ -47,17 +47,23 @@ export function StoryStudio({ store = storyStore }: StoryStudioProps) {
   const canGoPrevious = selectedStoryIndex > 0;
   const canGoNext = selectedStoryIndex >= 0 && selectedStoryIndex < storyPreviews.length - 1;
 
-  function showPreviousStory() {
+  const showPreviousStory = useCallback(() => {
     if (canGoPrevious) {
       setSelectedStoryId(storyPreviews[selectedStoryIndex - 1].id);
     }
-  }
+  }, [canGoPrevious, selectedStoryIndex, storyPreviews]);
 
-  function showNextStory() {
+  const showNextStory = useCallback(() => {
     if (canGoNext) {
       setSelectedStoryId(storyPreviews[selectedStoryIndex + 1].id);
     }
-  }
+  }, [canGoNext, selectedStoryIndex, storyPreviews]);
+
+  const handleViewerOpenChange = useCallback((open: boolean) => {
+    if (!open) {
+      setSelectedStoryId(null);
+    }
+  }, []);
 
   useEffect(() => {
     void hydrate();
@@ -179,11 +185,7 @@ export function StoryStudio({ store = storyStore }: StoryStudioProps) {
         onPrevious={showPreviousStory}
         onNext={showNextStory}
         loadOriginalImage={loadOriginalImage}
-        onOpenChange={(open) => {
-          if (!open) {
-            setSelectedStoryId(null);
-          }
-        }}
+        onOpenChange={handleViewerOpenChange}
       />
     </main>
   );

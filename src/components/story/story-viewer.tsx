@@ -7,6 +7,8 @@ import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from '@/components/ui/dialog';
 import type { StoryPreview } from '@/types/story';
 
+export const STORY_AUTOPLAY_DELAY_MS = 5_000;
+
 type StoryViewerProps = {
   story?: StoryPreview;
   storyCount: number;
@@ -69,6 +71,61 @@ export function StoryViewer({
   }, [loadOriginalImage, story]);
 
   const imageSrc = story && loadedImage?.storyId === story.id ? loadedImage.src : story?.imageSrc;
+
+  useEffect(() => {
+    if (!story) {
+      return;
+    }
+
+    let remainingMs = STORY_AUTOPLAY_DELAY_MS;
+    let startedAt = 0;
+    let timer: number | null = null;
+
+    function clearAutoplayTimer() {
+      if (timer !== null) {
+        window.clearTimeout(timer);
+        timer = null;
+      }
+    }
+
+    function scheduleAutoplay() {
+      if (timer !== null || document.visibilityState !== 'visible') {
+        return;
+      }
+
+      startedAt = Date.now();
+      timer = window.setTimeout(() => {
+        timer = null;
+        remainingMs = STORY_AUTOPLAY_DELAY_MS;
+
+        if (canGoNext) {
+          onNext();
+        } else {
+          onOpenChange(false);
+        }
+      }, remainingMs);
+    }
+
+    function handleVisibilityChange() {
+      if (document.visibilityState === 'hidden') {
+        if (timer !== null) {
+          remainingMs = Math.max(0, remainingMs - (Date.now() - startedAt));
+        }
+        clearAutoplayTimer();
+        return;
+      }
+
+      scheduleAutoplay();
+    }
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    scheduleAutoplay();
+
+    return () => {
+      clearAutoplayTimer();
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+    };
+  }, [canGoNext, onNext, onOpenChange, story]);
 
   useEffect(() => {
     if (!story) {
