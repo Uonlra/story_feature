@@ -130,10 +130,8 @@ export function StoryStudio({ store = storyStore }: StoryStudioProps) {
               <h1 className="[overflow-wrap:anywhere] text-4xl leading-tight font-semibold sm:text-5xl">24H Story</h1>
 
               <p className="mt-5 text-center text-base leading-7 text-text-muted sm:text-lg sm:leading-8">
-                24 小时后过期。
+                24H 后抹除上传记录
               </p>
-
-              <p className="mt-5 font-mono text-xs text-text-subtle">Local · ≤10 MB · 1080×1920 · 24h</p>
             </div>
 
             <div className="border-y border-border py-8 sm:py-10">
