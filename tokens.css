@@ -29,7 +29,7 @@
   --color-viewer-raised: oklch(23% 0.006 250);
   --color-viewer-ink: oklch(98% 0 0);
   --color-viewer-muted: oklch(78% 0.008 250);
-  --color-overlay: oklch(10% 0.006 250 / 72%);
+  --color-overlay: oklch(10% 0.006 250 / 82%);
 
   /* Semantic */
   --color-success: oklch(62.9% 0.127 155);

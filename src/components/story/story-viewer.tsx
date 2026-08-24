@@ -170,28 +170,6 @@ export function StoryViewer({
               className="h-auto max-h-[calc(100dvh-3rem)] w-auto max-w-[calc(100vw-1rem)] object-contain"
             />
 
-            <button
-              type="button"
-              onClick={onPrevious}
-              disabled={!canGoPrevious}
-              aria-label="上一条 Story"
-              title="上一条 Story"
-              className="absolute left-2 top-1/2 inline-flex size-11 -translate-y-1/2 items-center justify-center rounded-full bg-viewer-panel/80 text-viewer-text transition-colors hover:bg-viewer-panel disabled:pointer-events-none disabled:opacity-35"
-            >
-              <ChevronLeft aria-hidden="true" className="size-5" />
-            </button>
-
-            <button
-              type="button"
-              onClick={onNext}
-              disabled={!canGoNext}
-              aria-label="下一条 Story"
-              title="下一条 Story"
-              className="absolute right-2 top-1/2 inline-flex size-11 -translate-y-1/2 items-center justify-center rounded-full bg-viewer-panel/80 text-viewer-text transition-colors hover:bg-viewer-panel disabled:pointer-events-none disabled:opacity-35"
-            >
-              <ChevronRight aria-hidden="true" className="size-5" />
-            </button>
-
             <div
               aria-live="polite"
               className="absolute bottom-3 left-1/2 -translate-x-1/2 rounded-full bg-viewer-panel/85 px-3 py-1 font-mono text-xs text-viewer-text"
@@ -199,6 +177,27 @@ export function StoryViewer({
               {storyIndex + 1} / {storyCount}
             </div>
           </div>
+          <button
+            type="button"
+            onClick={onPrevious}
+            disabled={!canGoPrevious}
+            aria-label="上一条 Story"
+            title="上一条 Story"
+            className="fixed left-3 top-1/2 z-dialog inline-flex size-11 -translate-y-1/2 items-center justify-center rounded-full bg-viewer-panel/85 text-viewer-text transition-[background-color,opacity,transform] duration-180 hover:scale-105 hover:bg-viewer-panel disabled:pointer-events-none disabled:opacity-35 sm:left-6"
+          >
+            <ChevronLeft aria-hidden="true" className="size-5" />
+          </button>
+
+          <button
+            type="button"
+            onClick={onNext}
+            disabled={!canGoNext}
+            aria-label="下一条 Story"
+            title="下一条 Story"
+            className="fixed right-3 top-1/2 z-dialog inline-flex size-11 -translate-y-1/2 items-center justify-center rounded-full bg-viewer-panel/85 text-viewer-text transition-[background-color,opacity,transform] duration-180 hover:scale-105 hover:bg-viewer-panel disabled:pointer-events-none disabled:opacity-35 sm:right-6"
+          >
+            <ChevronRight aria-hidden="true" className="size-5" />
+          </button>
         </DialogContent>
       ) : null}
     </Dialog>
