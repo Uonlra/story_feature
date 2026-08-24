@@ -1,5 +1,6 @@
 'use client';
 
+import { Plus } from 'lucide-react';
 import { useRef, useState } from 'react';
 
 import { processImageFile, type ProcessedImage } from '@/lib/image-processing';
@@ -60,9 +61,7 @@ export function AddStoryButton({ onImageReady, processFile = processImageFile }:
         title={isProcessing ? '正在处理 Story 图片' : '添加 Story'}
         className="story-action-button inline-flex size-11 items-center justify-center rounded-full border border-brand/30 bg-brand-soft text-xl leading-none font-medium text-brand transition-[background-color,border-color,color,transform] duration-200 ease-out hover:border-brand hover:bg-brand hover:text-on-brand active:bg-brand-active disabled:cursor-not-allowed disabled:border-border disabled:bg-disabled-surface disabled:text-disabled-ink"
       >
-        <span aria-hidden="true" className={isProcessing ? 'animate-spin' : undefined}>
-          +
-        </span>
+        <Plus aria-hidden="true" className={isProcessing ? 'size-5 animate-spin' : 'size-5'} />
       </button>
 
       {errorMessage ? (

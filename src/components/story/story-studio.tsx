@@ -1,5 +1,7 @@
 'use client';
 
+import Link from 'next/link';
+import { GitFork, Globe2 } from 'lucide-react';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useStore } from 'zustand';
 
@@ -118,9 +120,18 @@ export function StoryStudio({ store = storyStore }: StoryStudioProps) {
           <div className="flex items-center justify-between gap-4 px-4 py-6 sm:px-6 sm:py-8 lg:px-8">
             <p className="min-w-0 text-sm font-semibold tracking-[-0.02em]">Story Feature</p>
 
-            <span className="shrink-0 rounded-full border border-border bg-panel px-3 py-1 text-xs font-medium text-text-muted">
-              Local only
-            </span>
+            <div className="flex shrink-0 items-center gap-3">
+              <Link
+                href="/about"
+                className="text-sm font-medium text-text-muted transition-colors hover:text-brand focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-brand"
+              >
+                About
+              </Link>
+
+              <span className="rounded-full border border-border bg-panel px-3 py-1 text-xs font-medium text-text-muted">
+                Local only
+              </span>
+            </div>
           </div>
         </header>
 
@@ -168,8 +179,32 @@ export function StoryStudio({ store = storyStore }: StoryStudioProps) {
         </div>
 
         <footer className="w-full border-t border-border">
-          <div className="px-4 py-5 text-xs leading-5 text-text-muted sm:px-6 lg:px-8">
-            Next.js · React · TypeScript · Tailwind CSS
+          <div className="flex flex-col gap-4 px-4 py-5 text-xs leading-5 text-text-muted sm:flex-row sm:items-center sm:justify-between sm:px-6 lg:px-8">
+            <p>Next.js · React · TypeScript · Tailwind CSS</p>
+
+            <nav aria-label="外部链接" className="flex items-center gap-2 self-end">
+              <a
+                href="https://github.com/Uonlra"
+                target="_blank"
+                rel="noreferrer"
+                aria-label="GitHub"
+                title="GitHub"
+                className="inline-flex size-11 items-center justify-center rounded-full border border-border bg-panel text-text-muted transition-[background-color,border-color,color,transform] duration-200 ease-out hover:border-brand/50 hover:bg-brand-soft hover:text-brand focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand active:scale-95"
+              >
+                <GitFork aria-hidden="true" className="size-4" />
+              </a>
+
+              <a
+                href="https://www.uon1ra.top/"
+                target="_blank"
+                rel="noreferrer"
+                aria-label="个人网站"
+                title="个人网站"
+                className="inline-flex size-11 items-center justify-center rounded-full border border-border bg-panel text-text-muted transition-[background-color,border-color,color,transform] duration-200 ease-out hover:border-brand/50 hover:bg-brand-soft hover:text-brand focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand active:scale-95"
+              >
+                <Globe2 aria-hidden="true" className="size-4" />
+              </a>
+            </nav>
           </div>
         </footer>
       </div>

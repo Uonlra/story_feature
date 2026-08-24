@@ -107,6 +107,25 @@ describe('StoryStudio expiry scheduling', () => {
   });
 });
 
+describe('StoryStudio navigation', () => {
+  it('links to the about page and external profiles', async () => {
+    const repository = createRepository();
+    const store = createStoryStore(repository);
+
+    render(<StoryStudio store={store} />);
+
+    expect(await screen.findByRole('link', { name: 'About' })).toHaveAttribute('href', '/about');
+
+    const githubLink = screen.getByRole('link', { name: 'GitHub' });
+    expect(githubLink).toHaveAttribute('href', 'https://github.com/Uonlra');
+    expect(githubLink).toHaveAttribute('target', '_blank');
+
+    const websiteLink = screen.getByRole('link', { name: '个人网站' });
+    expect(websiteLink).toHaveAttribute('href', 'https://www.uon1ra.top/');
+    expect(websiteLink).toHaveAttribute('target', '_blank');
+  });
+});
+
 describe('StoryStudio viewer', () => {
   it('opens the selected story and closes it', async () => {
     const user = userEvent.setup();

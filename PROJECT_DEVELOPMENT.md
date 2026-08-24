@@ -3,19 +3,21 @@
 > 项目定位：前端求职展示型 Story 功能练习项目  
 > 项目目录：`D:\Studys\Projects\story_feature`
 > 开发方式：一次只实现一类功能，先代码，再测试，再验收  
-> 文档版本：v1.2（2026-08-20）
+> 文档版本：v1.3（2026-08-24）
 
 ## 1. 项目目标
 
 实现一个类似 Instagram / WhatsApp 的 Story 功能，但只做客户端本地版：
 
 - 顶部显示 Story 列表和新增入口。
-- 用户选择一张本地图片后，压缩、缩放并转成 Base64 Data URL。
-- 图片和元数据存入 `localStorage`，刷新后仍可恢复。
+- 用户选择一张本地图片后，读取原始尺寸，压缩生成缩略图，并保留原图 Blob。
+- 缩略图元数据与原图分别存入 IndexedDB，刷新后仍可恢复。
 - 每条 Story 在 24 小时后自动过期并从界面与存储中移除。
 - 用户可以打开查看器查看 Story，支持按钮和键盘切换。
 - 首版只做单图选择，不做多图批量上传。
 - 移动端滑动作为核心功能完成后的增强项。
+
+当前已完成阶段 0–3、阶段 4 的 Viewer 主体和阶段 5：工程基线、响应式 Story 列表、图片处理、IndexedDB 持久化、Viewer 和 `/about` 页面。Viewer 内删除确认 UI 仍待补齐；阶段 6 负责移动端手势、可访问性、性能、CI 与 README 收尾。
 
 这个项目的重点不是“做一个轮播图”，而是练习 React、TypeScript、CSS、Next.js、浏览器 API、可访问性、测试和 CI 的完整闭环。
 
@@ -30,11 +32,11 @@
 - 图片输出前必须等比缩放到不超过 `1080 x 1920`，小图不放大。
 - 处理结果保存为 Base64 Data URL。
 - Story 按创建时间排序，新的追加到末尾。
-- Story 数据持久化到 `localStorage`。
+- Story 数据持久化到 IndexedDB；缩略图元数据和原始图片 Blob 分开保存。
 - Story 到期后自动清理。
 - 支持查看器打开、关闭、上一条、下一条。
 - 支持键盘 `Escape`、`ArrowLeft`、`ArrowRight`。
-- 支持删除当前 Story，并在删除前二次确认。
+- repository 和 Zustand store 支持删除 Story；Viewer 内的删除确认 UI 仍列为后续增强项。
 - 支持空状态、加载状态、错误状态、删除状态。
 - `/about` 页面用于展示项目说明、技术栈、限制和清空本地数据入口。
 - 响应式适配移动端和桌面端。
@@ -60,9 +62,9 @@
 | 样式     | Tailwind CSS + CSS Modules                   | Tailwind 负责常规布局与视觉，CSS Modules 只用于少量动画、遮罩和复杂过渡 |
 | 组件基础 | shadcn/ui                                    | 提供 Button、Dialog、AlertDialog、Tooltip、Sonner 等基础交互组件        |
 | 状态管理 | Zustand                                      | 管理 Story 集合、增删改清、过期过滤和存储同步                           |
-| 校验     | Zod                                          | 校验 `localStorage` 数据版本与结构                                      |
+| 校验     | Zod                                          | 校验迁移数据和 Story 元数据结构                                         |
 | 图片处理 | 原生 File API + `createImageBitmap` + Canvas | 读取、缩放、压缩和导出 Data URL                                         |
-| 本地存储 | `localStorage`                               | 满足题目要求，作为唯一数据源                                            |
+| 本地存储 | IndexedDB                                    | 分离保存 Story 元数据与原始图片 Blob，支持异步读写和清理                 |
 | 图标     | lucide-react                                 | 统一使用语义清晰的图标                                                  |
 | 单测     | Vitest + Testing Library + user-event        | 覆盖工具函数、状态逻辑和交互行为                                        |
 | E2E      | Playwright                                   | 验证真实浏览器中的上传、恢复、过期和查看流程                            |
@@ -81,7 +83,7 @@
 - 查看器首版默认自动播放，每条 Story 展示 5 秒。
 - 页面不可见时暂停计时，恢复可见后继续当前条目剩余时间。
 - 单条图片上传后的体积目标尽量控制在约 800 KB。
-- 本地存储总量目标控制在约 4 MB 内，超过时要给出明确错误。
+- IndexedDB 容量由浏览器管理；写入失败时转换为明确的存储错误。
 - Story 数量软上限为 20 条。
 
 ### 3.3 浏览器与运行环境
@@ -101,7 +103,7 @@
 
 - [Cosmos](https://www.cosmos.so/)：参考图片优先、界面退后、低干扰的内容组织方式。
 - [Linear](https://linear.app/)：参考严格的内容轴、间距纪律、状态反馈和精简文案。
-- Story 产品观看模式：列表负责快速扫描，查看器负责近黑背景下的 9:16 沉浸观看。
+- Story 产品观看模式：列表负责快速扫描，查看器负责近黑背景下的原图比例观看。
 
 参考只用于提取布局、层级和交互原则，不复制具体页面结构、品牌视觉或文案。
 
@@ -127,19 +129,20 @@
 
 布局规则：
 
-- Header 与 Footer 使用相同的 `max-w-6xl` 外框、页面 gutter 和左右边界。
+- Header 与 Footer 使用全宽外框、统一页面 gutter 和左右边界。
 - Main 内部使用 `w-full max-w-3xl mx-auto`，形成稳定的居中内容轴。
 - 页面保持正常文档流，从上到下自然增长；不使用全视口主体垂直居中。
 - 首页按“标题与价值说明 -> 能力指标 -> Story 操作区 -> Story 列表”纵向排列。
 - “添加 Story”与 Story 标题、数量组成同一个操作组，不把按钮孤立到页面最右侧。
-- 移动端保持单列；Story 列表超出宽度时只在列表内部横向滚动。
+- 移动端使用三列 Story Grid，`sm` 以上使用四列；列表自然向下扩展，不产生横向滚动。
 - 页面根节点保持 `overflow-x: clip`，在 `320 / 375 / 414 / 768px` 验证无页面级横向溢出。
 
 ### 4.3 视觉层级
 
 - 用户图片是页面的第一视觉信号，界面只提供必要的组织、状态和操作。
 - Story 列表用于快速扫描；首版可保留圆形封面，尺寸建议为 `72–80px`。
-- Story Viewer 使用近黑背景和 9:16 主画面，成为项目的主要视觉展示区域。
+- Story Viewer 使用近黑背景和原图比例主画面；图片只有超过视口时才缩小。
+- Viewer 的上一张、下一张按钮固定在视口左右中部，不随图片尺寸变化。
 - 首页使用温暖浅色画布，Viewer 使用独立深色表面，不实现全站深色主题。
 - 只使用细边框、低饱和辅助文字和严格间距，不使用装饰性渐变、玻璃拟态、发光阴影或无语义背景图形。
 - 阴影仅用于 Viewer、Dialog 等确实需要表达层级的覆盖界面。
@@ -209,7 +212,7 @@ export type StoryStorageV1 = {
 - 使用 `crypto.randomUUID()` 生成 `id`。
 - `createdAt` 和 `expiresAt` 使用 Unix 毫秒时间戳。
 - `expiresAt = createdAt + 24 * 60 * 60 * 1000`。
-- 读取到的外部数据必须先做结构校验。
+- 读取到的旧版迁移数据必须先做结构校验。
 - 损坏数据直接忽略并回退为空列表。
 - UI 上的索引、剩余时间等信息都从当前状态派生，不写回存储。
 
@@ -239,7 +242,7 @@ components/
 │  ├─ story-progress.tsx
 │  ├─ add-story-button.tsx
 │  └─ delete-story-dialog.tsx
-└─ about/
+└─ story/
    └─ clear-stories-button.tsx
 
 store/
@@ -262,9 +265,9 @@ tests/
 
 职责边界：
 
-- `components` 只做渲染和事件转发，不直接读写 `localStorage`。
+- `components` 只做渲染和事件转发，不直接读写 IndexedDB。
 - `store/story-store.ts` 负责集合状态、创建、删除、过期清理和持久化协调。
-- `services/story-repository.ts` 负责序列化、反序列化、版本兼容和异常处理。
+- `services/story-repository.ts` 负责 IndexedDB 事务、原图 Blob、元数据、旧版 localStorage 迁移和异常处理。
 - `lib/image-processing.ts` 负责校验、解码、缩放和 Data URL 生成。
 - `lib/story-utils.ts` 负责创建 Story、判断过期和过滤逻辑。
 - `lib/story-schema.ts` 负责 Zod 校验。
@@ -302,9 +305,12 @@ tests/
   -> Canvas 绘制并压缩
   -> 导出 Base64 Data URL
   -> 创建 Story 数据
-  -> 写入 localStorage
+  -> 写入 IndexedDB metadata store
+  -> 写入 IndexedDB original-images store
   -> 更新 Zustand 状态
 ```
+
+说明：Data URL 只用于列表缩略图；Viewer 打开时按 Story id 读取原始 Blob，并通过 `URL.createObjectURL()` 显示。
 
 规则：
 
@@ -328,7 +334,8 @@ tests/
   -> 再次清理过期数据
 
 查看器打开时
-  -> 若当前 Story 过期则自动切换或关闭
+  -> 按 id 读取原始图片 Blob
+  -> 若当前 Story 过期则由列表清理并关闭查看器
 ```
 
 说明：
@@ -343,7 +350,10 @@ tests/
 - 支持上一条、下一条和关闭。
 - 支持 `Escape`、`ArrowLeft`、`ArrowRight`。
 - 当前项删除后优先切到下一条，没有下一条则切到上一条。
+- 图片按原始宽高比显示，小图尽量保持自身尺寸，超出视口时才缩小。
+- 上一张、下一张按钮固定在视口左右中部，不随图片比例移动。
 - 最后一条播放完自动关闭。
+- 每条 Story 自动播放 5 秒。
 - 用户手动切换后重新开始完整 5 秒。
 - 页面不可见时暂停，回来后继续剩余时间。
 - 首版不把移动端滑动作为验收门槛，放到增强阶段。
@@ -356,8 +366,9 @@ tests/
 | 非图片文件             | 提示只支持 JPEG / PNG / WebP |
 | 图片损坏               | 提示图片无法读取             |
 | 文件过大               | 直接拒绝并提示               |
-| localStorage 满了      | 提示存储空间不足，保留旧数据 |
-| localStorage JSON 损坏 | 回退为空列表，不让页面崩溃   |
+| IndexedDB 不可用        | 提示浏览器不支持本地存储       |
+| IndexedDB 写入失败      | 提示存储空间或写入错误，保留旧数据 |
+| 旧版 localStorage 损坏   | 忽略迁移数据并回退为空列表       |
 | Story 过期             | 自动清理并更新界面           |
 | 列表为空               | 显示空状态和新增入口         |
 | 快速重复点击           | 处理中禁用入口，避免并发写入 |
@@ -384,7 +395,8 @@ tests/
 - 处理期间按钮不可重复触发。
 - Story 列表按数据渲染。
 - 查看器支持切换、关闭和键盘操作。
-- 删除确认流程正确。
+- 自动播放、页面不可见暂停和序号显示正确。
+- 清空本地 Story 的确认流程正确。
 - 空状态和骨架屏正确显示。
 
 ### 10.3 E2E（Playwright）
@@ -397,7 +409,7 @@ tests/
 
 ### 10.4 可访问性
 
-- 使用 `axe-core` 检查首页和查看器。
+- 使用 `axe-core` 检查首页、查看器和 `/about`。
 - 文件输入必须有标签。
 - 图标按钮必须有可访问名称。
 - 错误消息使用 `role="alert"`。
@@ -462,15 +474,17 @@ pnpm test:e2e
 ### 阶段 4：Story 查看器
 
 - 使用 shadcn/ui Dialog 构建查看器。
-- 完成切换、关闭、键盘、删除确认。
-- 处理查看过程中 Story 过期。
+- 完成切换、关闭、键盘和序号显示。
+- 完成原图 Blob 加载、自适应尺寸和 5 秒自动播放。
+- 页面不可见时暂停，最后一条播放完自动关闭。
+- 删除确认 UI 尚未完成，保留为后续增强项。
 
-验收：焦点管理、边界切换和删除路径可测。
+验收：焦点管理、边界切换和 Viewer 主体交互可测；删除确认路径待补齐。
 
 ### 阶段 5：项目说明页
 
 - 完成 `/about` 页面。
-- 加入技术栈、限制、隐私与 localStorage 说明。
+- 加入技术栈、限制、隐私与 IndexedDB 说明。
 - 提供清空本地 Story 的入口。
 
 验收：页面主体为 Server Component，清空按钮独立工作。
@@ -520,6 +534,15 @@ docs: update architecture and tradeoffs
 - 关键单测、组件测试、E2E 和生产构建通过。
 - README 能清楚解释本地存储、图片缩放、过期策略和技术取舍。
 
-## 15. 第一轮实施范围
+## 15. 当前进度与下一步
 
-下一轮只做“阶段 0：工程基线”。完成后先停下来，确认目录、路由、工具链和测试基线都正常，再进入“阶段 1：Story 静态列表”。这样每轮只学习一类问题，不把项目一次性摊平。
+阶段 0–3、阶段 4 的 Viewer 主体和阶段 5 已完成：工程基线、响应式 Story 列表、单图处理、IndexedDB 持久化、Story Viewer 和 `/about` 页面。
+
+阶段 4 收尾与阶段 6 待完成：
+
+- Viewer 内删除确认与查看中删除后的切换策略。
+- 移动端触摸滑动切换。
+- 首页、Viewer 和 `/about` 的真实浏览器可访问性扫描。
+- 图片加载与 Viewer 交互的性能检查。
+- GitHub Actions CI。
+- README、演示流程和架构取舍说明。
